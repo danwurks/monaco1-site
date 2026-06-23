@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MONACO1 — Trump Tower Monaco, tokenized · SCM Monaco</title>
+<meta name="description" content="Tokenized access to premium Monaco real estate. MONACO1 (M1) — a new generation of real-estate investment infrastructure within a regulated framework. Join the investor waitlist." />
+
+<!-- Fonts: General Sans (Fontshare) preferred display; Hanken Grotesk (Google) primary fallback -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
+
+<!-- Lenis smooth scroll via import map -->
+<script type="importmap">
+{ "imports": { "lenis": "https://unpkg.com/lenis@1.1.14/dist/lenis.mjs" } }
+</script>
+
+<style>
+:root{
+  --paper:#F5F1EA; --pearl:#FBF8F2; --ink:#15252B; --muted:#566970;
+  --line:rgba(21,37,43,.13); --azure:#1C6FB0; --azure-deep:#155E9C;
+  --sea:#0E2A47; --glass:#DCE9EA; --sky:#8FC2DE;
+  --display:"General Sans","Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --body:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --maxw:1200px;
+  --r:18px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{ -webkit-text-size-adjust:100%; }
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto !important}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+.lenis.lenis-stopped{overflow:hidden}
+
+body{
+  font-family:var(--body);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.5;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+img,video{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+::selection{background:var(--sky);color:var(--sea)}
+
+/* Focus rings — visible everywhere */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid var(--azure);
+  outline-offset:3px;
+  border-radius:6px;
+}
+
+.skip{
+  position:absolute;left:-999px;top:0;z-index:1000;
+  background:var(--ink);color:#fff;padding:12px 18px;border-radius:0 0 10px 0;
+  font-weight:600;
+}
+.skip:focus{left:0}
+
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:24px}
+@media(max-width:560px){ .wrap{padding-inline:20px} }
+
+/* ---------- Type scale ---------- */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--body);
+  font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--azure-deep);
+}
+.eyebrow .ring{
+  width:11px;height:11px;border-radius:50%;
+  border:1.5px solid currentColor;display:inline-grid;place-items:center;flex:none;
+}
+.eyebrow .ring::after{content:"";width:3px;height:3px;border-radius:50%;background:currentColor}
+.eyebrow.light{color:rgba(255,255,255,.86)}
+
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-.025em;line-height:1.02}
+h1{font-size:clamp(2.6rem,7.2vw,5.4rem);font-weight:700}
+h2{font-size:clamp(2rem,4.6vw,3.6rem)}
+h3{font-size:clamp(1.3rem,2.2vw,1.7rem);letter-spacing:-.018em}
+.lead{font-size:clamp(1.05rem,1.5vw,1.32rem);color:var(--muted);font-weight:400;line-height:1.55;max-width:52ch}
+p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
+
+/* ---------- Buttons / pills ---------- */
+.pill{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 24px;border-radius:999px;
+  font-family:var(--display);font-weight:600;font-size:1rem;letter-spacing:-.01em;
+  border:1px solid transparent;transition:transform .25s ease,background .25s ease,box-shadow .25s ease,border-color .25s ease;
+  white-space:nowrap;
+}
+.pill svg{width:16px;height:16px;flex:none}
+.pill-ink{background:var(--ink);color:var(--pearl)}
+.pill-ink:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(21,37,43,.22)}
+.pill-azure{background:var(--azure-deep);color:#fff}
+.pill-azure:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(21,111,176,.32)}
+.pill-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.pill-ghost:hover{border-color:var(--ink);transform:translateY(-2px)}
+.pill-light{background:#fff;color:var(--sea)}
+.pill-light:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.3)}
+.pill-outline-light{background:transparent;border-color:rgba(255,255,255,.5);color:#fff}
+.pill-outline-light:hover{border-color:#fff;background:rgba(255,255,255,.08);transform:translateY(-2px)}
+
+/* tag chips */
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 13px;border-radius:999px;border:1px solid var(--line);
+  font-size:.8rem;font-weight:500;color:var(--ink);background:rgba(255,255,255,.4);
+}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+
+/* ---------- Nav ---------- */
+.nav{
+  position:fixed;inset:0 0 auto 0;z-index:80;
+  transition:background .35s ease,box-shadow .35s ease,backdrop-filter .35s;
+}
+.nav.scrolled{
+  background:rgba(251,248,242,.82);backdrop-filter:saturate(140%) blur(14px);
+  box-shadow:0 1px 0 var(--line);
+}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:72px;gap:20px}
+.wordmark{
+  font-family:var(--display);font-weight:700;font-size:1.18rem;letter-spacing:-.01em;
+  color:#fff;transition:color .35s ease;
+}
+.wordmark .dot{color:var(--sky)}
+.nav.scrolled .wordmark{color:var(--ink)}
+.nav.scrolled .wordmark .dot{color:var(--azure-deep)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{
+  font-size:.95rem;font-weight:500;color:rgba(255,255,255,.82);transition:color .35s ease;
+}
+.nav-links a:hover{color:#fff}
+.nav.scrolled .nav-links a{color:var(--muted)}
+.nav.scrolled .nav-links a:hover{color:var(--ink)}
+.nav .pill{font-size:.92rem;padding:11px 19px}
+.nav-cta-wrap{display:flex;align-items:center;gap:18px}
+@media(max-width:880px){
+  .nav-links{display:none}
+}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
+.hero video,.hero .poster-fallback{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;
+}
+.hero::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:
+    linear-gradient(180deg,rgba(14,42,71,.42) 0%,rgba(14,42,71,.10) 32%,rgba(14,42,71,.18) 58%,rgba(10,24,38,.86) 100%),
+    radial-gradient(120% 80% at 20% 100%,rgba(10,24,38,.55),transparent 60%);
+}
+.hero-inner{padding-block:120px 56px}
+.hero .eyebrow{margin-bottom:26px}
+.hero h1{color:#fff;max-width:15ch;text-shadow:0 2px 30px rgba(0,0,0,.28)}
+.hero-sub{
+  color:rgba(255,255,255,.9);font-size:clamp(1.05rem,1.6vw,1.32rem);
+  max-width:46ch;margin-top:24px;line-height:1.55;font-weight:400;
+}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:38px}
+.scroll-cue{
+  display:inline-flex;align-items:center;gap:11px;margin-top:48px;
+  color:rgba(255,255,255,.72);font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+}
+.scroll-cue .mouse{
+  width:22px;height:34px;border:1.5px solid rgba(255,255,255,.55);border-radius:12px;position:relative;flex:none;
+}
+.scroll-cue .mouse::after{
+  content:"";position:absolute;left:50%;top:7px;transform:translateX(-50%);
+  width:3px;height:7px;border-radius:2px;background:rgba(255,255,255,.85);
+  animation:wheel 1.8s ease-in-out infinite;
+}
+@keyframes wheel{0%{opacity:0;transform:translate(-50%,-3px)}40%{opacity:1}80%{opacity:0;transform:translate(-50%,8px)}}
+
+/* ---------- Section scaffolding ---------- */
+section{position:relative}
+.sec{padding-block:clamp(72px,10vw,128px)}
+.sec-head{max-width:62ch}
+.grid-asym{
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(32px,6vw,76px);align-items:end;
+}
+@media(max-width:880px){ .grid-asym{grid-template-columns:1fr;gap:34px;align-items:start} }
+
+.figure{border-radius:var(--r);overflow:hidden;position:relative;background:var(--glass)}
+.figure img{width:100%;height:100%;object-fit:cover}
+.cap{font-size:.82rem;color:var(--muted);margin-top:11px;display:flex;gap:8px;align-items:center}
+.cap b{color:var(--ink);font-weight:600}
+
+/* number list */
+.numlist{list-style:none;display:grid;gap:0}
+.numlist li{
+  display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,42px);
+  padding:30px 0;border-top:1px solid var(--line);align-items:start;
+}
+.numlist li:last-child{border-bottom:1px solid var(--line)}
+.numlist .num{
+  font-family:var(--display);font-weight:600;font-size:clamp(1.4rem,2.4vw,2rem);
+  color:var(--azure-deep);letter-spacing:-.02em;line-height:1;
+}
+.numlist h3{margin-bottom:8px}
+.numlist p{color:var(--muted);font-size:1.02rem;line-height:1.55;max-width:48ch}
+
+/* 3-up gallery */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px}
+.three .figure{aspect-ratio:4/5}
+@media(max-width:740px){ .three{grid-template-columns:1fr;gap:22px} .three .figure{aspect-ratio:16/11} }
+
+/* ---------- Project ---------- */
+.tower-fig{aspect-ratio:5/6;width:100%}
+@media(max-width:880px){ .tower-fig{aspect-ratio:4/3} }
+
+.location{
+  margin-top:64px;display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,4vw,52px);
+  align-items:center;background:var(--pearl);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;
+}
+.location .loc-map{position:relative;min-height:280px}
+.location .loc-map img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.location .loc-body{padding:clamp(28px,4vw,52px)}
+.location .addr{font-family:var(--display);font-weight:600;font-size:clamp(1.3rem,2vw,1.7rem);letter-spacing:-.02em;margin:14px 0 12px}
+@media(max-width:740px){ .location{grid-template-columns:1fr} .location .loc-map{min-height:220px;order:-1} }
+
+/* ---------- AI ---------- */
+.ai-sec{background:var(--pearl);border-block:1px solid var(--line)}
+.ai-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(32px,5vw,68px);align-items:center}
+.ai-fig{aspect-ratio:4/3;border-radius:var(--r);overflow:hidden}
+.ai-fig img{width:100%;height:100%;object-fit:cover}
+@media(max-width:880px){ .ai-grid{grid-template-columns:1fr;gap:32px} }
+.feature-row{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:36px}
+.feature-row .f h3{font-size:1.05rem;margin-bottom:6px}
+.feature-row .f p{font-size:.94rem;color:var(--muted);line-height:1.5}
+.feature-row .f .ix{font-family:var(--display);color:var(--azure-deep);font-weight:600;font-size:.85rem;letter-spacing:.06em}
+@media(max-width:560px){ .feature-row{grid-template-columns:1fr;gap:20px} }
+
+/* ---------- TOKEN (dark jewel-box) ---------- */
+.token{
+  background:
+    radial-gradient(120% 90% at 80% 0%,rgba(28,111,176,.30),transparent 55%),
+    radial-gradient(90% 80% at 0% 100%,rgba(143,194,222,.12),transparent 50%),
+    var(--sea);
+  color:#fff;overflow:hidden;
+}
+.token .eyebrow{color:var(--sky)}
+.token h2{color:#fff}
+.token-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(40px,6vw,80px);align-items:center}
+@media(max-width:880px){ .token-grid{grid-template-columns:1fr;gap:48px} }
+
+/* coin placeholder medallion */
+.medallion-stage{display:flex;flex-direction:column;align-items:center;gap:20px}
+.medallion{
+  width:clamp(220px,30vw,320px);aspect-ratio:1;border-radius:50%;position:relative;
+  background:
+    conic-gradient(from 210deg,#cfe6f4,#5a9fce 18%,#1C6FB0 36%,#0E2A47 52%,#1C6FB0 70%,#8FC2DE 86%,#cfe6f4);
+  box-shadow:
+    0 30px 70px -20px rgba(0,0,0,.6),
+    inset 0 2px 14px rgba(255,255,255,.4),
+    inset 0 -10px 30px rgba(14,42,71,.55);
+  display:grid;place-items:center;
+  animation:floaty 6s ease-in-out infinite;
+}
+.medallion::before{
+  content:"";position:absolute;inset:9%;border-radius:50%;
+  background:radial-gradient(60% 60% at 35% 30%,#eaf5fb,#3f86bf 45%,#0E2A47);
+  box-shadow:inset 0 3px 16px rgba(255,255,255,.45),inset 0 -8px 24px rgba(8,22,40,.6);
+}
+.medallion::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  border:2px solid rgba(255,255,255,.25);
+  background:linear-gradient(135deg,rgba(255,255,255,.35),transparent 40%);
+  pointer-events:none;
+}
+.medallion .m1{
+  position:relative;z-index:2;font-family:var(--display);font-weight:700;
+  font-size:clamp(3rem,7vw,4.6rem);letter-spacing:-.04em;color:#eef7fc;
+  text-shadow:0 1px 0 rgba(255,255,255,.5),0 -2px 6px rgba(8,22,40,.65),0 4px 10px rgba(8,22,40,.5);
+}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
+.medallion-cap{text-align:center;color:rgba(255,255,255,.74);font-size:.9rem;max-width:30ch;line-height:1.5}
+.medallion-cap .badge{
+  display:inline-block;font-family:var(--display);font-weight:600;font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--sky);border:1px solid rgba(143,194,222,.4);
+  border-radius:999px;padding:5px 12px;margin-bottom:12px;
+}
+
+.benefits{list-style:none;display:grid;gap:18px;margin:30px 0 34px}
+.benefits li{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.benefits .bi{
+  width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:rgba(143,194,222,.16);border:1px solid rgba(143,194,222,.3);color:var(--sky);
+}
+.benefits .bi svg{width:17px;height:17px}
+.benefits h3{color:#fff;font-size:1.08rem;margin-bottom:3px}
+.benefits p{color:rgba(255,255,255,.74);font-size:.96rem;line-height:1.5}
+.token .lead{color:rgba(255,255,255,.82)}
+
+/* ---------- MEDIA ---------- */
+.video-frame{
+  border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+  background:#000;box-shadow:0 24px 60px -28px rgba(21,37,43,.4);position:relative;
+}
+.video-frame video{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#0E2A47}
+.video-label{
+  position:absolute;top:14px;left:14px;z-index:3;
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 13px;border-radius:999px;background:rgba(14,42,71,.72);backdrop-filter:blur(6px);
+  color:#fff;font-size:.78rem;font-weight:600;letter-spacing:.04em;
+}
+.video-label .live{width:7px;height:7px;border-radius:50%;background:var(--sky)}
+.media-top{display:grid;grid-template-columns:1.4fr .6fr;gap:clamp(28px,4vw,52px);align-items:center}
+@media(max-width:880px){ .media-top{grid-template-columns:1fr;gap:30px} }
+
+.visuals{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+.visuals .tile{
+  border-radius:14px;overflow:hidden;aspect-ratio:1;background:var(--glass);position:relative;
+}
+.visuals .tile img{
+  width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.7,.2,1);
+}
+.visuals .tile:hover img{transform:scale(1.07)}
+.visuals .tile.wide{grid-column:span 2;aspect-ratio:auto}
+@media(max-width:740px){ .visuals{grid-template-columns:1fr 1fr;gap:12px} .visuals .tile.wide{grid-column:span 2;aspect-ratio:16/10} }
+@media(max-width:430px){ .visuals{grid-template-columns:1fr} .visuals .tile.wide{grid-column:span 1} }
+
+/* ---------- WAITLIST ---------- */
+.waitlist{background:var(--pearl);border-block:1px solid var(--line)}
+.wl-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(36px,5vw,72px);align-items:stretch}
+@media(max-width:880px){ .wl-grid{grid-template-columns:1fr;gap:34px} }
+.wl-fig{border-radius:var(--r);overflow:hidden;min-height:320px;position:relative}
+.wl-fig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@media(max-width:880px){ .wl-fig{min-height:260px;order:2} }
+
+form.wl{display:grid;gap:18px;margin-top:30px}
+.field{display:grid;gap:7px}
+.field label{font-size:.86rem;font-weight:600;color:var(--ink)}
+.field label .req{color:var(--azure-deep)}
+.field input,.field select{
+  font-family:var(--body);font-size:1rem;color:var(--ink);
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;width:100%;
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+.field input::placeholder{color:#9aa9af}
+.field input:focus,.field select:focus{border-color:var(--azure);box-shadow:0 0 0 3px rgba(28,111,176,.14);outline:none}
+.field input:focus-visible,.field select:focus-visible{outline:3px solid var(--azure);outline-offset:2px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:520px){ .two-col{grid-template-columns:1fr} }
+.consent{font-size:.84rem;color:var(--muted);line-height:1.5;display:flex;gap:11px;align-items:flex-start}
+.consent input{margin-top:3px;width:17px;height:17px;flex:none;accent-color:var(--azure-deep)}
+.consent a{color:var(--azure-deep);text-decoration:underline;text-underline-offset:2px}
+form.wl .pill{justify-content:center;margin-top:4px}
+
+.wl-success{
+  display:none;background:#fff;border:1px solid var(--line);border-radius:var(--r);
+  padding:clamp(28px,4vw,44px);margin-top:30px;
+}
+.wl-success.show{display:block;animation:pop .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wl-success .check{
+  width:52px;height:52px;border-radius:50%;background:var(--azure-deep);color:#fff;
+  display:grid;place-items:center;margin-bottom:18px;
+}
+.wl-success h3{margin-bottom:10px}
+.wl-success p{color:var(--muted);line-height:1.55;max-width:44ch}
+
+.illus{display:inline-block;font-size:.78rem;color:var(--muted);font-style:italic;opacity:.85}
+
+/* ---------- CTA closer + footer ---------- */
+.closer{position:relative;min-height:88svh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;isolation:isolate}
+.closer .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.closer::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(10,24,38,.62),rgba(10,24,38,.5) 50%,rgba(8,18,30,.9));
+}
+.closer-inner{text-align:center;padding-block:130px 60px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.closer .eyebrow{margin-bottom:24px;justify-content:center}
+.closer h2{color:#fff;max-width:16ch;margin-inline:auto;text-shadow:0 2px 30px rgba(0,0,0,.3)}
+.closer .lead{color:rgba(255,255,255,.86);margin:22px auto 36px;text-align:center}
+.closer .pill{margin-inline:auto}
+
+.foot{position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.16);padding-block:30px}
+.foot-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.foot .wordmark{color:#fff}
+.foot .wordmark .dot{color:var(--sky)}
+.foot-links{display:flex;gap:24px;flex-wrap:wrap}
+.foot-links a{color:rgba(255,255,255,.74);font-size:.9rem}
+.foot-links a:hover{color:#fff}
+.foot .copy{color:rgba(255,255,255,.6);font-size:.84rem}
+@media(max-width:620px){ .foot-inner{flex-direction:column;align-items:flex-start;gap:14px} }
+
+/* ---------- Reveal animation ---------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+[data-stagger] > *{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+[data-stagger].in > *{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  .reveal,[data-stagger] > *{opacity:1 !important;transform:none !important}
+  .scroll-cue .mouse::after{display:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#project">Skip to content</a>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a href="#top" class="wordmark" aria-label="MONACO1 home">MONACO<span class="dot">1</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#project">Project</a>
+      <a href="#tokenization">Tokenization</a>
+      <a href="#monaco1">MONACO1</a>
+      <a href="#waitlist">Waitlist</a>
+    </nav>
+    <div class="nav-cta-wrap">
+      <a href="#waitlist" class="pill pill-azure">Join the waitlist</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ===================== 1 · HERO ===================== -->
+<section class="hero" aria-label="Introduction">
+  <video autoplay muted loop playsinline poster="assets/img/img-19.jpg" aria-hidden="true">
+    <source src="assets/video/hero.mp4" type="video/mp4" />
+  </video>
+  <img class="poster-fallback" src="assets/img/img-19.jpg" alt="" aria-hidden="true" style="z-index:-3" />
+  <div class="wrap hero-inner">
+    <span class="eyebrow light"><span class="ring"></span>Côte d'Azur · Monaco</span>
+    <h1>Trump Tower Monaco, tokenized.</h1>
+    <p class="hero-sub">Tokenized access to premium Monaco real estate — a new generation of real-estate investment infrastructure, built for the AI era and offered within a regulated framework.</p>
+    <div class="hero-cta">
+      <a href="#waitlist" class="pill pill-light">Join the waitlist</a>
+      <a href="#project" class="pill pill-outline-light">Discover the project
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+    <span class="scroll-cue" aria-hidden="true"><span class="mouse"></span>Scroll to explore</span>
+  </div>
+</section>
+
+<!-- ===================== 2 · PROJECT ===================== -->
+<section class="sec" id="project" aria-labelledby="project-h">
+  <div class="wrap">
+    <div class="grid-asym reveal">
+      <div class="sec-head">
+        <span class="eyebrow"><span class="ring"></span>The project</span>
+        <h2 id="project-h" style="margin-top:18px">A landmark on the Côte d'Azur.</h2>
+        <div class="chips" style="margin-top:22px">
+          <span class="chip">Premium real estate</span>
+          <span class="chip">Monaco</span>
+          <span class="chip">Exclusivity</span>
+        </div>
+      </div>
+      <div>
+        <p class="lead">Trump Tower Monaco rises in curved silhouette above the marina — a residence of rare scale and finish, conceived for those who measure a place by its light, its address and its outlook.</p>
+        <p class="body" style="margin-top:18px;max-width:48ch">MONACO1 brings this calibre of real estate within reach through tokenization — premium, considered, and structured for a modern investor.</p>
+      </div>
+    </div>
+
+    <div class="figure reveal" style="margin-top:56px">
+      <div class="tower-fig">
+        <img src="assets/img/img-15.jpg" alt="Close render of the curved Trump Tower Monaco beside the marina at sunset." />
+      </div>
+    </div>
+
+    <!-- 3-up residences / amenities -->
+    <div class="three" data-stagger aria-label="Residences and amenities">
+      <figure class="figure-wrap">
+        <div class="figure"><img loading="lazy" src="assets/img/img-09.jpg" alt="Luxury living room interior with a sea and yacht view at Trump Tower Monaco." /></div>
+        <figcaption class="cap"><b>Living</b> · sea-view interiors</figcaption>
+      </figure>
+      <figure class="figure-wrap">
+        <div class="figure"><img loading="lazy" src="assets/img/img-26.jpg" alt="Bedroom interior overlooking the harbor at sunset." /></div>
+        <figcaption class="cap"><b>Residences</b> · harbor outlook</figcaption>
+      </figure>
+      <figure class="figure-wrap">
+        <div class="figure"><img loading="lazy" src="assets/img/img-22.jpg" alt="A swimmer in a glass infinity pool suspended over the Monaco harbor." /></div>
+        <figcaption class="cap"><b>Amenities</b> · infinity pool</figcaption>
+      </figure>
+    </div>
+
+    <!-- LOCATION -->
+    <div class="location reveal">
+      <div class="loc-body">
+        <span class="eyebrow"><span class="ring"></span>Location</span>
+        <div class="addr">21, Boulevard du Larvotto</div>
+        <p class="body">98000 Monaco — Larvotto, on the eastern seafront, moments from the Grand Prix circuit and the Place du Casino.</p>
+        <div class="chips" style="margin-top:18px">
+          <span class="chip">Larvotto seafront</span>
+          <span class="chip">Principality of Monaco</span>
+        </div>
+      </div>
+      <div class="loc-map">
+        <img loading="lazy" src="assets/img/img-13.jpg" alt="Stylized dark map of Monaco with a pin marking 21, Boulevard du Larvotto, 98000 Monaco." />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 3 · TOKENIZATION ===================== -->
+<section class="sec" id="tokenization" aria-labelledby="token-h" style="background:var(--pearl);border-block:1px solid var(--line)">
+  <div class="wrap">
+    <div class="grid-asym reveal" style="align-items:start">
+      <div class="sec-head">
+        <span class="eyebrow"><span class="ring"></span>Tokenization</span>
+        <h2 id="token-h" style="margin-top:18px">A clearer way into premium real estate.</h2>
+      </div>
+      <div>
+        <p class="lead">MONACO1 (M1) represents a tokenized interest connected to a premium Monaco real-estate opportunity — designed to be transparent, considered and accessible.</p>
+      </div>
+    </div>
+
+    <div class="grid-asym" style="margin-top:48px;align-items:center">
+      <ol class="numlist reveal" aria-label="How tokenization works">
+        <li>
+          <span class="num">01</span>
+          <div>
+            <h3>Access</h3>
+            <p>A low-friction way into premium Monaco real estate, opened to a wider circle of qualified investors.</p>
+          </div>
+        </li>
+        <li>
+          <span class="num">02</span>
+          <div>
+            <h3>Structure</h3>
+            <p>A tokenized interest held within a regulated framework, with the structure and documentation set out clearly.</p>
+          </div>
+        </li>
+        <li>
+          <span class="num">03</span>
+          <div>
+            <h3>Liquidity</h3>
+            <p>Built to extend as the platform grows — designed with future transferability in mind as the ecosystem matures.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="figure reveal" style="aspect-ratio:4/5">
+        <img loading="lazy" src="assets/img/img-06.jpg" alt="A hand wearing a gold ring touching golden-lit water — an image of considered access." />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4 · AI & REAL ESTATE ===================== -->
+<section class="sec ai-sec" id="ai" aria-labelledby="ai-h">
+  <div class="wrap">
+    <div class="ai-grid">
+      <div class="ai-fig figure reveal">
+        <img loading="lazy" src="assets/img/img-30.jpg" alt="A teal and black Formula 1 car on the Monaco circuit, suggesting precision and technology." />
+      </div>
+      <div class="reveal">
+        <span class="eyebrow"><span class="ring"></span>AI &amp; real estate</span>
+        <h2 id="ai-h" style="margin-top:18px">Precision, applied to property.</h2>
+        <p class="lead" style="margin-top:20px">We pair premium real estate with modern, data-driven infrastructure — using AI-era tooling to inform diligence, structuring and reporting.</p>
+        <div class="feature-row" data-stagger>
+          <div class="f">
+            <span class="ix">i.</span>
+            <h3>Data-driven insights</h3>
+            <p>Market and asset signals, organised to support clearer decisions.</p>
+          </div>
+          <div class="f">
+            <span class="ix">ii.</span>
+            <h3>Modern infrastructure</h3>
+            <p>A platform built on contemporary, auditable rails.</p>
+          </div>
+          <div class="f">
+            <span class="ix">iii.</span>
+            <h3>Transparency</h3>
+            <p>Reporting designed to keep investors informed.</p>
+          </div>
+        </div>
+        <p class="illus" style="margin-top:24px">Tooling supports, but does not replace, professional diligence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 5 · TOKEN MONACO1 / M1 (dark) ===================== -->
+<section class="sec token" id="monaco1" aria-labelledby="m1-h">
+  <div class="wrap">
+    <div class="token-grid">
+      <!-- coin placeholder -->
+      <div class="medallion-stage reveal">
+        <div class="medallion" role="img" aria-label="M1 token medallion — placeholder for an interactive 3D coin, coming soon.">
+          <span class="m1">M1</span>
+        </div>
+        <p class="medallion-cap">
+          <span class="badge">Placeholder</span><br />
+          M1 — the MONACO1 token. Interactive 3D coin coming soon.
+        </p>
+      </div>
+
+      <div class="reveal">
+        <span class="eyebrow"><span class="ring"></span>The token · M1</span>
+        <h2 id="m1-h" style="margin-top:18px">MONACO1, in a single token.</h2>
+        <p class="lead" style="margin-top:20px">M1 is the digital expression of the MONACO1 opportunity — a tokenized interest that connects investors to premium Monaco real estate within a regulated framework, with the rigour of a Securitize-grade approach.</p>
+
+        <ul class="benefits" data-stagger>
+          <li>
+            <span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <div><h3>Regulated by design</h3><p>Structured and documented within a regulated framework.</p></div>
+          </li>
+          <li>
+            <span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <div><h3>Built for liquidity</h3><p>Designed to extend transferability as the platform grows.</p></div>
+          </li>
+          <li>
+            <span class="bi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13a9 9 0 0 1 18 0"/><path d="M12 13l4-3"/><circle cx="12" cy="13" r="1.6"/></svg></span>
+            <div><h3>Transparent reporting</h3><p>Clear, data-driven reporting for token holders.</p></div>
+          </li>
+        </ul>
+
+        <a href="#waitlist" class="pill pill-light">Request investor access
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <p class="illus" style="display:block;margin-top:18px;color:rgba(255,255,255,.6)">All figures and token mechanics shown are illustrative.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 6 · BROCHURE & MEDIA ===================== -->
+<section class="sec" id="media" aria-labelledby="media-h">
+  <div class="wrap">
+    <div class="grid-asym reveal" style="align-items:end;margin-bottom:48px">
+      <div class="sec-head">
+        <span class="eyebrow"><span class="ring"></span>Brochure &amp; media</span>
+        <h2 id="media-h" style="margin-top:18px">See the project in full.</h2>
+      </div>
+      <div>
+        <p class="lead">The presentation film, the brochure and a selection of client visuals — everything you need to understand Trump Tower Monaco and the MONACO1 token.</p>
+      </div>
+    </div>
+
+    <div class="media-top">
+      <div class="video-frame reveal">
+        <span class="video-label"><span class="live"></span>Presentation film</span>
+        <video controls preload="none" poster="assets/img/img-32.jpg">
+          <source src="assets/video/hero.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <div class="reveal">
+        <h3>Download the brochure.</h3>
+        <p class="body" style="margin:12px 0 22px;max-width:36ch">A detailed presentation of the residences, amenities, location and the MONACO1 structure.</p>
+        <a href="assets/doc/brochure.pdf" download class="pill pill-ink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Download the brochure (PDF)
+        </a>
+      </div>
+    </div>
+
+    <!-- visuals gallery -->
+    <div class="visuals" data-stagger aria-label="Project visuals">
+      <a class="tile wide" href="assets/img/img-08.jpg"><img loading="lazy" src="assets/img/img-08.jpg" alt="A black Bugatti parked outside the Monte-Carlo Casino at dusk." /></a>
+      <a class="tile" href="assets/img/img-24.jpg"><img loading="lazy" src="assets/img/img-24.jpg" alt="A poolside coconut beside a Trump Tower Monaco brochure on marble, yachts in the background." /></a>
+      <a class="tile" href="assets/img/img-16.jpg"><img loading="lazy" src="assets/img/img-16.jpg" alt="A couple dining with a sea view at dusk." /></a>
+      <a class="tile" href="assets/img/img-07.jpg"><img loading="lazy" src="assets/img/img-07.jpg" alt="A chef plating a dish in a luxury kitchen overlooking Monaco." /></a>
+      <a class="tile" href="assets/img/img-01.jpg"><img loading="lazy" src="assets/img/img-01.jpg" alt="A woman aboard a yacht in the Monaco harbor." /></a>
+      <a class="tile" href="assets/img/img-29.jpg"><img loading="lazy" src="assets/img/img-29.jpg" alt="A branded Trump Tower Monaco champagne bottle on ice against a blue background." /></a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 7 · WAITLIST ===================== -->
+<section class="sec waitlist" id="waitlist" aria-labelledby="wl-h">
+  <div class="wrap">
+    <div class="wl-grid">
+      <div class="reveal">
+        <span class="eyebrow"><span class="ring"></span>Investor waiting list</span>
+        <h2 id="wl-h" style="margin-top:18px">Register your interest.</h2>
+        <p class="lead" style="margin-top:18px">Join the MONACO1 waitlist to receive investor access, documentation and updates as the platform opens.</p>
+
+        <form class="wl" id="wlForm" novalidate>
+          <div class="field">
+            <label for="fullname">Full name <span class="req" aria-hidden="true">*</span></label>
+            <input id="fullname" name="fullname" type="text" autocomplete="name" placeholder="Jane Doe" required />
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+            </div>
+            <div class="field">
+              <label for="phone">Phone</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+377 00 00 00 00" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="itype">Investor type <span class="req" aria-hidden="true">*</span></label>
+            <select id="itype" name="itype" required>
+              <option value="" disabled selected>Select an option</option>
+              <option value="individual">Individual</option>
+              <option value="professional">Professional</option>
+              <option value="institutional">Institutional</option>
+            </select>
+          </div>
+          <label class="consent">
+            <input type="checkbox" id="consent" name="consent" required />
+            <span>By registering you agree to be contacted about MONACO1. Your data is handled per our <a href="#">privacy notice</a>.</span>
+          </label>
+          <button type="submit" class="pill pill-azure">Request investor access</button>
+          <p class="illus">Front-end demo — no data is transmitted. A confirmation email would be sent on submission.</p>
+        </form>
+
+        <div class="wl-success" id="wlSuccess" role="status" aria-live="polite">
+          <div class="check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          </div>
+          <h3>You're on the list.</h3>
+          <p>Thank you — your interest in MONACO1 has been registered. A confirmation email is on its way, and our team will be in touch with investor access and documentation.</p>
+        </div>
+      </div>
+
+      <div class="wl-fig reveal">
+        <img loading="lazy" src="assets/img/img-04.jpg" alt="A woman relaxing on a balcony overlooking the Monaco harbor at sunset." />
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== 8 · CTA CLOSER + FOOTER ===================== -->
+<section class="closer" id="cta" aria-labelledby="cta-h">
+  <img class="bg" src="assets/img/img-19.jpg" alt="Monaco at blue hour, Trump Tower lit against cool-blue tones." loading="lazy" />
+  <div class="wrap closer-inner">
+    <span class="eyebrow light"><span class="ring"></span>MONACO1 · Investor access</span>
+    <h2 id="cta-h">Be among the first to access MONACO1.</h2>
+    <p class="lead">Register your interest today and step into a new generation of real-estate investment infrastructure.</p>
+    <a href="#waitlist" class="pill pill-light">Join the waitlist
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <footer class="foot">
+    <div class="wrap foot-inner">
+      <a href="#top" class="wordmark">MONACO<span class="dot">1</span></a>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="#">Contact</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms</a>
+      </nav>
+      <span class="copy">© 2026 SCM Monaco. All rights reserved.</span>
+    </div>
+  </footer>
+</section>
+
+<script type="module">
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- Lenis smooth scroll (gated behind reduced-motion) ---- */
+  if (!reduce) {
+    try {
+      const { default: Lenis } = await import('lenis');
+      const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+      // anchor links → lenis scroll
+      document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+          const id = a.getAttribute('href');
+          if (id.length > 1) {
+            const el = document.querySelector(id);
+            if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: 0 }); }
+          }
+        });
+      });
+    } catch (err) { /* network/import failure: native scroll remains */ }
+  }
+</script>
+
+<script>
+  /* ---- Nav background on scroll ---- */
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 40);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ---- Scroll reveal (gated) ---- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealEls = document.querySelectorAll('.reveal, [data-stagger]');
+
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    revealEls.forEach(el => {
+      el.classList.add('in');
+      el.querySelectorAll(':scope > *').forEach(c => c.style.transition = 'none');
+    });
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          if (el.hasAttribute('data-stagger')) {
+            [...el.children].forEach((child, i) => {
+              child.style.transitionDelay = (i * 90) + 'ms';
+            });
+          }
+          el.classList.add('in');
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach(el => io.observe(el));
+  }
+
+  /* ---- Waitlist form (front-end only) ---- */
+  const form = document.getElementById('wlForm');
+  const success = document.getElementById('wlSuccess');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+    form.style.display = 'none';
+    success.classList.add('show');
+    success.setAttribute('tabindex', '-1');
+    success.focus({ preventScroll: true });
+  });
+</script>
+</body>
+</html>
