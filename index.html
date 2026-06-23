@@ -6,26 +6,33 @@
 <title>MONACO1 — Trump Tower Monaco, tokenized · SCM Monaco</title>
 <meta name="description" content="Tokenized access to premium Monaco real estate. MONACO1 (M1) — a new generation of real-estate investment infrastructure within a regulated framework. Join the investor waitlist." />
 
-<!-- Fonts: General Sans (Fontshare) preferred display; Hanken Grotesk (Google) primary fallback -->
+<!-- Fonts: Archivo (variable, weight + width axes) — condensed architectural grotesque, closest free match to artez -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..900&display=swap" rel="stylesheet" />
 
 <!-- Lenis smooth scroll via import map -->
 <script type="importmap">
 { "imports": { "lenis": "https://unpkg.com/lenis@1.1.14/dist/lenis.mjs" } }
 </script>
 
+<!-- GSAP + ScrollTrigger via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
 <style>
 :root{
   --paper:#F5F1EA; --pearl:#FBF8F2; --ink:#15252B; --muted:#566970;
   --line:rgba(21,37,43,.13); --azure:#1C6FB0; --azure-deep:#155E9C;
   --sea:#0E2A47; --glass:#DCE9EA; --sky:#8FC2DE;
-  --display:"General Sans","Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  --body:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  --maxw:1200px;
+  --display:"Archivo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --body:"Archivo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --maxw:1280px;
   --r:18px;
+  /* heading color-fill tints (decorative muted -> readable filled) */
+  --fill-muted:rgba(21,37,43,.20);
+  --fill-muted-dark:rgba(255,255,255,.18);
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -65,14 +72,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 }
 .skip:focus{left:0}
 
-.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:24px}
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:28px}
 @media(max-width:560px){ .wrap{padding-inline:20px} }
 
-/* ---------- Type scale ---------- */
+/* ---------- Type scale (Archivo — condensed architectural) ---------- */
 .eyebrow{
   display:inline-flex;align-items:center;gap:10px;
   font-family:var(--body);
-  font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  font-size:.76rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
   color:var(--azure-deep);
 }
 .eyebrow .ring{
@@ -82,18 +89,52 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .eyebrow .ring::after{content:"";width:3px;height:3px;border-radius:50%;background:currentColor}
 .eyebrow.light{color:rgba(255,255,255,.86)}
 
-h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-.025em;line-height:1.02}
-h1{font-size:clamp(2.6rem,7.2vw,5.4rem);font-weight:700}
-h2{font-size:clamp(2rem,4.6vw,3.6rem)}
-h3{font-size:clamp(1.3rem,2.2vw,1.7rem);letter-spacing:-.018em}
-.lead{font-size:clamp(1.05rem,1.5vw,1.32rem);color:var(--muted);font-weight:400;line-height:1.55;max-width:52ch}
+/* Display headings: Archivo, UPPERCASE, heavy, condensed, tight */
+h1,h2,h3{
+  font-family:var(--display);
+  font-weight:800;
+  font-stretch:78%;
+  text-transform:uppercase;
+  letter-spacing:-.01em;
+  line-height:.95;
+}
+h1{font-size:clamp(3rem,9vw,7rem);font-weight:900}
+h2{font-size:clamp(2.2rem,5.4vw,4.6rem)}
+h3{font-size:clamp(1.2rem,2vw,1.55rem);letter-spacing:0;line-height:1.05}
+.lead{font-family:var(--body);font-size:clamp(1.05rem,1.5vw,1.32rem);color:var(--muted);font-weight:400;line-height:1.55;max-width:52ch;text-transform:none;font-stretch:100%;letter-spacing:0}
 p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
+
+/* ---------- Section-heading color fill (signature artez effect) ---------- */
+/* Per-character fill (like artez's .char divs). JS splits each .fill-head into
+   <span class="ch"> glyphs IN READING ORDER, keeping real spaces between words so
+   the heading still wraps naturally. A per-heading ScrollTrigger then tints each
+   char sequentially (char 0 first), continuing across line breaks because line-2
+   chars carry higher indices. The base color is the MUTED tint; JS lerps each
+   char toward its FILLED color. Data attributes carry the two endpoint colors so
+   the splitter/scrubber can read them per heading. */
+.fill-head{
+  display:inline;
+  color:var(--fill-muted);            /* default muted before split/scrub */
+}
+/* Word wrapper keeps a word's letters together (no mid-word breaks); the heading
+   wraps at the real spaces emitted between words. */
+.fill-head .word{ display:inline-block;white-space:nowrap; }
+.fill-head .ch{
+  /* color is driven inline by JS (lerp MUTED->FILLED), char 0 first. */
+  display:inline;
+  will-change:color;
+}
+/* Endpoint colors are exposed as CSS vars per variant; JS reads them to lerp.
+   FILLED defaults to --ink; accent uses --azure-deep; on-dark inverts. */
+.fill-head{ --fill-on:var(--ink); --fill-off:var(--fill-muted); }
+.fill-head.accent{ --fill-on:var(--azure-deep); }
+.fill-head.on-dark{ --fill-on:#FBF8F2; --fill-off:var(--fill-muted-dark); }
 
 /* ---------- Buttons / pills ---------- */
 .pill{
   display:inline-flex;align-items:center;gap:9px;
-  padding:14px 24px;border-radius:999px;
-  font-family:var(--display);font-weight:600;font-size:1rem;letter-spacing:-.01em;
+  padding:15px 26px;border-radius:999px;
+  font-family:var(--display);font-weight:700;font-size:.92rem;letter-spacing:.04em;text-transform:uppercase;font-stretch:90%;
   border:1px solid transparent;transition:transform .25s ease,background .25s ease,box-shadow .25s ease,border-color .25s ease;
   white-space:nowrap;
 }
@@ -113,7 +154,8 @@ p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
 .chip{
   display:inline-flex;align-items:center;gap:7px;
   padding:6px 13px;border-radius:999px;border:1px solid var(--line);
-  font-size:.8rem;font-weight:500;color:var(--ink);background:rgba(255,255,255,.4);
+  font-size:.78rem;font-weight:600;color:var(--ink);background:rgba(255,255,255,.4);
+  text-transform:uppercase;letter-spacing:.06em;
 }
 .chips{display:flex;flex-wrap:wrap;gap:9px}
 
@@ -128,7 +170,7 @@ p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
 }
 .nav-inner{display:flex;align-items:center;justify-content:space-between;height:72px;gap:20px}
 .wordmark{
-  font-family:var(--display);font-weight:700;font-size:1.18rem;letter-spacing:-.01em;
+  font-family:var(--display);font-weight:900;font-size:1.3rem;letter-spacing:.02em;text-transform:uppercase;font-stretch:82%;
   color:#fff;transition:color .35s ease;
 }
 .wordmark .dot{color:var(--sky)}
@@ -136,12 +178,13 @@ p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
 .nav.scrolled .wordmark .dot{color:var(--azure-deep)}
 .nav-links{display:flex;align-items:center;gap:28px}
 .nav-links a{
-  font-size:.95rem;font-weight:500;color:rgba(255,255,255,.82);transition:color .35s ease;
+  font-size:.82rem;font-weight:600;color:rgba(255,255,255,.82);transition:color .35s ease;
+  text-transform:uppercase;letter-spacing:.1em;
 }
 .nav-links a:hover{color:#fff}
 .nav.scrolled .nav-links a{color:var(--muted)}
 .nav.scrolled .nav-links a:hover{color:var(--ink)}
-.nav .pill{font-size:.92rem;padding:11px 19px}
+.nav .pill{font-size:.78rem;padding:11px 19px}
 .nav-cta-wrap{display:flex;align-items:center;gap:18px}
 @media(max-width:880px){
   .nav-links{display:none}
@@ -160,15 +203,15 @@ p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
 }
 .hero-inner{padding-block:120px 56px}
 .hero .eyebrow{margin-bottom:26px}
-.hero h1{color:#fff;max-width:15ch;text-shadow:0 2px 30px rgba(0,0,0,.28)}
+.hero h1{color:#fff;max-width:16ch;text-shadow:0 2px 30px rgba(0,0,0,.28)}
 .hero-sub{
   color:rgba(255,255,255,.9);font-size:clamp(1.05rem,1.6vw,1.32rem);
-  max-width:46ch;margin-top:24px;line-height:1.55;font-weight:400;
+  max-width:46ch;margin-top:26px;line-height:1.55;font-weight:400;
 }
 .hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:38px}
 .scroll-cue{
   display:inline-flex;align-items:center;gap:11px;margin-top:48px;
-  color:rgba(255,255,255,.72);font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  color:rgba(255,255,255,.72);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;
 }
 .scroll-cue .mouse{
   width:22px;height:34px;border:1.5px solid rgba(255,255,255,.55);border-radius:12px;position:relative;flex:none;
@@ -182,8 +225,15 @@ p.body{color:var(--muted);font-size:1.02rem;line-height:1.6}
 
 /* ---------- Section scaffolding ---------- */
 section{position:relative}
-.sec{padding-block:clamp(72px,10vw,128px)}
-.sec-head{max-width:62ch}
+.sec{padding-block:clamp(80px,11vw,148px)}
+.sec-head{max-width:none}
+/* Architectural header block: eyebrow, oversized left-aligned condensed heading.
+   Widened so typical headings sit on 1–2 lines, not 3. (FIX 3) */
+.head-block{margin-bottom:clamp(40px,6vw,80px);max-width:min(1180px,92vw)}
+.head-block.wide{max-width:min(1180px,92vw)}
+.head-block .eyebrow{margin-bottom:24px}
+.head-block h2{margin-top:0}
+
 .grid-asym{
   display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
   gap:clamp(32px,6vw,76px);align-items:end;
@@ -192,8 +242,8 @@ section{position:relative}
 
 .figure{border-radius:var(--r);overflow:hidden;position:relative;background:var(--glass)}
 .figure img{width:100%;height:100%;object-fit:cover}
-.cap{font-size:.82rem;color:var(--muted);margin-top:11px;display:flex;gap:8px;align-items:center}
-.cap b{color:var(--ink);font-weight:600}
+.cap{font-size:.78rem;color:var(--muted);margin-top:11px;display:flex;gap:8px;align-items:center;text-transform:uppercase;letter-spacing:.06em}
+.cap b{color:var(--ink);font-weight:700}
 
 /* number list */
 .numlist{list-style:none;display:grid;gap:0}
@@ -203,7 +253,7 @@ section{position:relative}
 }
 .numlist li:last-child{border-bottom:1px solid var(--line)}
 .numlist .num{
-  font-family:var(--display);font-weight:600;font-size:clamp(1.4rem,2.4vw,2rem);
+  font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,2.6vw,2.4rem);font-stretch:78%;
   color:var(--azure-deep);letter-spacing:-.02em;line-height:1;
 }
 .numlist h3{margin-bottom:8px}
@@ -226,7 +276,7 @@ section{position:relative}
 .location .loc-map{position:relative;min-height:280px}
 .location .loc-map img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .location .loc-body{padding:clamp(28px,4vw,52px)}
-.location .addr{font-family:var(--display);font-weight:600;font-size:clamp(1.3rem,2vw,1.7rem);letter-spacing:-.02em;margin:14px 0 12px}
+.location .addr{font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,2.2vw,2rem);letter-spacing:-.01em;margin:14px 0 12px;text-transform:uppercase;font-stretch:80%;line-height:1}
 @media(max-width:740px){ .location{grid-template-columns:1fr} .location .loc-map{min-height:220px;order:-1} }
 
 /* ---------- AI ---------- */
@@ -236,9 +286,9 @@ section{position:relative}
 .ai-fig img{width:100%;height:100%;object-fit:cover}
 @media(max-width:880px){ .ai-grid{grid-template-columns:1fr;gap:32px} }
 .feature-row{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:36px}
-.feature-row .f h3{font-size:1.05rem;margin-bottom:6px}
+.feature-row .f h3{font-size:1.02rem;margin-bottom:6px}
 .feature-row .f p{font-size:.94rem;color:var(--muted);line-height:1.5}
-.feature-row .f .ix{font-family:var(--display);color:var(--azure-deep);font-weight:600;font-size:.85rem;letter-spacing:.06em}
+.feature-row .f .ix{font-family:var(--display);color:var(--azure-deep);font-weight:700;font-size:.82rem;letter-spacing:.06em}
 @media(max-width:560px){ .feature-row{grid-template-columns:1fr;gap:20px} }
 
 /* ---------- TOKEN (dark jewel-box) ---------- */
@@ -250,7 +300,6 @@ section{position:relative}
   color:#fff;overflow:hidden;
 }
 .token .eyebrow{color:var(--sky)}
-.token h2{color:#fff}
 .token-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(40px,6vw,80px);align-items:center}
 @media(max-width:880px){ .token-grid{grid-template-columns:1fr;gap:48px} }
 
@@ -279,14 +328,14 @@ section{position:relative}
   pointer-events:none;
 }
 .medallion .m1{
-  position:relative;z-index:2;font-family:var(--display);font-weight:700;
+  position:relative;z-index:2;font-family:var(--display);font-weight:900;font-stretch:78%;
   font-size:clamp(3rem,7vw,4.6rem);letter-spacing:-.04em;color:#eef7fc;
   text-shadow:0 1px 0 rgba(255,255,255,.5),0 -2px 6px rgba(8,22,40,.65),0 4px 10px rgba(8,22,40,.5);
 }
 @keyframes floaty{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-12px) rotate(1.5deg)}}
 .medallion-cap{text-align:center;color:rgba(255,255,255,.74);font-size:.9rem;max-width:30ch;line-height:1.5}
 .medallion-cap .badge{
-  display:inline-block;font-family:var(--display);font-weight:600;font-size:.72rem;letter-spacing:.14em;
+  display:inline-block;font-family:var(--display);font-weight:700;font-size:.7rem;letter-spacing:.18em;
   text-transform:uppercase;color:var(--sky);border:1px solid rgba(143,194,222,.4);
   border-radius:999px;padding:5px 12px;margin-bottom:12px;
 }
@@ -298,11 +347,11 @@ section{position:relative}
   background:rgba(143,194,222,.16);border:1px solid rgba(143,194,222,.3);color:var(--sky);
 }
 .benefits .bi svg{width:17px;height:17px}
-.benefits h3{color:#fff;font-size:1.08rem;margin-bottom:3px}
+.benefits h3{color:#fff;font-size:1.05rem;margin-bottom:3px}
 .benefits p{color:rgba(255,255,255,.74);font-size:.96rem;line-height:1.5}
 .token .lead{color:rgba(255,255,255,.82)}
 
-/* ---------- MEDIA ---------- */
+/* ---------- MEDIA (film + brochure, compact) ---------- */
 .video-frame{
   border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
   background:#000;box-shadow:0 24px 60px -28px rgba(21,37,43,.4);position:relative;
@@ -312,23 +361,60 @@ section{position:relative}
   position:absolute;top:14px;left:14px;z-index:3;
   display:inline-flex;align-items:center;gap:8px;
   padding:7px 13px;border-radius:999px;background:rgba(14,42,71,.72);backdrop-filter:blur(6px);
-  color:#fff;font-size:.78rem;font-weight:600;letter-spacing:.04em;
+  color:#fff;font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
 }
 .video-label .live{width:7px;height:7px;border-radius:50%;background:var(--sky)}
 .media-top{display:grid;grid-template-columns:1.4fr .6fr;gap:clamp(28px,4vw,52px);align-items:center}
 @media(max-width:880px){ .media-top{grid-template-columns:1fr;gap:30px} }
 
-.visuals{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
-.visuals .tile{
-  border-radius:14px;overflow:hidden;aspect-ratio:1;background:var(--glass);position:relative;
+/* ---------- GALLERY (pinned centered DECK, front card exits in 3D) ---------- */
+.gallery{
+  background:linear-gradient(180deg,var(--pearl),var(--paper));
+  border-block:1px solid var(--line);
+  position:relative;
 }
-.visuals .tile img{
-  width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.7,.2,1);
+/* Track length is set inline from JS-side N (≈ N*100vh) so there's ample scrub.
+   The STAGE inside is what GSAP ScrollTrigger pins (pin:'.gallery-stage'). */
+.gallery-track{position:relative}
+.gallery-stage{
+  height:100svh;position:relative;display:grid;place-items:center;overflow:hidden;
+  perspective:1400px;perspective-origin:50% 42%;
+  background:var(--paper);
 }
-.visuals .tile:hover img{transform:scale(1.07)}
-.visuals .tile.wide{grid-column:span 2;aspect-ratio:auto}
-@media(max-width:740px){ .visuals{grid-template-columns:1fr 1fr;gap:12px} .visuals .tile.wide{grid-column:span 2;aspect-ratio:16/10} }
-@media(max-width:430px){ .visuals{grid-template-columns:1fr} .visuals .tile.wide{grid-column:span 1} }
+/* Each card is dead-centered via translate(-50%,-50%); JS appends further
+   transforms after that base. Front card starts SMALL (height ≈ FRONT_VH). */
+.g-img{
+  position:absolute;left:50%;top:50%;transform-origin:center;
+  height:42vh;aspect-ratio:3/4;
+  transform:translate(-50%,-50%);
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 30px 70px -28px rgba(8,22,40,.55),0 6px 22px -10px rgba(8,22,40,.32);
+  background:var(--glass);
+  backface-visibility:hidden;
+  will-change:transform;
+}
+.g-img img{width:100%;height:100%;object-fit:cover}
+/* Final centered statement (text — opacity-based is fine here) */
+.gallery-statement{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);
+  text-align:center;width:min(900px,92vw);pointer-events:none;
+  opacity:0;z-index:200;
+}
+.gallery-statement h2{
+  color:var(--ink);font-size:clamp(2.4rem,7vw,5.4rem);line-height:.92;
+}
+
+/* Static fallback grid (reduced motion / no GSAP) */
+.gallery-fallback{display:none;margin-top:48px}
+.gallery-fallback .grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+}
+.gallery-fallback .grid .fb-tile{border-radius:14px;overflow:hidden;aspect-ratio:3/4;background:var(--glass)}
+.gallery-fallback .grid .fb-tile img{width:100%;height:100%;object-fit:cover}
+.gallery-fallback .statement{text-align:center;margin-top:56px}
+.gallery-fallback .statement h2{font-size:clamp(2.2rem,6vw,4.5rem)}
+@media(max-width:880px){ .gallery-fallback .grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:480px){ .gallery-fallback .grid{grid-template-columns:1fr} }
 
 /* ---------- WAITLIST ---------- */
 .waitlist{background:var(--pearl);border-block:1px solid var(--line)}
@@ -340,7 +426,7 @@ section{position:relative}
 
 form.wl{display:grid;gap:18px;margin-top:30px}
 .field{display:grid;gap:7px}
-.field label{font-size:.86rem;font-weight:600;color:var(--ink)}
+.field label{font-size:.84rem;font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.04em}
 .field label .req{color:var(--azure-deep)}
 .field input,.field select{
   font-family:var(--body);font-size:1rem;color:var(--ink);
@@ -352,7 +438,7 @@ form.wl{display:grid;gap:18px;margin-top:30px}
 .field input:focus-visible,.field select:focus-visible{outline:3px solid var(--azure);outline-offset:2px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:520px){ .two-col{grid-template-columns:1fr} }
-.consent{font-size:.84rem;color:var(--muted);line-height:1.5;display:flex;gap:11px;align-items:flex-start}
+.consent{font-size:.84rem;color:var(--muted);line-height:1.5;display:flex;gap:11px;align-items:flex-start;text-transform:none;letter-spacing:0}
 .consent input{margin-top:3px;width:17px;height:17px;flex:none;accent-color:var(--azure-deep)}
 .consent a{color:var(--azure-deep);text-decoration:underline;text-underline-offset:2px}
 form.wl .pill{justify-content:center;margin-top:4px}
@@ -370,7 +456,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
 .wl-success h3{margin-bottom:10px}
 .wl-success p{color:var(--muted);line-height:1.55;max-width:44ch}
 
-.illus{display:inline-block;font-size:.78rem;color:var(--muted);font-style:italic;opacity:.85}
+.illus{display:inline-block;font-size:.78rem;color:var(--muted);font-style:italic;opacity:.85;text-transform:none;letter-spacing:0}
 
 /* ---------- CTA closer + footer ---------- */
 .closer{position:relative;min-height:88svh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;isolation:isolate}
@@ -381,8 +467,9 @@ form.wl .pill{justify-content:center;margin-top:4px}
 }
 .closer-inner{text-align:center;padding-block:130px 60px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center}
 .closer .eyebrow{margin-bottom:24px;justify-content:center}
-.closer h2{color:#fff;max-width:16ch;margin-inline:auto;text-shadow:0 2px 30px rgba(0,0,0,.3)}
-.closer .lead{color:rgba(255,255,255,.86);margin:22px auto 36px;text-align:center}
+.closer h2{max-width:18ch;margin-inline:auto;text-shadow:0 2px 30px rgba(0,0,0,.3)}
+/* closer heading uses on-dark fill variant */
+.closer .lead{color:rgba(255,255,255,.86);margin:26px auto 36px;text-align:center}
 .closer .pill{margin-inline:auto}
 
 .foot{position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.16);padding-block:30px}
@@ -390,9 +477,9 @@ form.wl .pill{justify-content:center;margin-top:4px}
 .foot .wordmark{color:#fff}
 .foot .wordmark .dot{color:var(--sky)}
 .foot-links{display:flex;gap:24px;flex-wrap:wrap}
-.foot-links a{color:rgba(255,255,255,.74);font-size:.9rem}
+.foot-links a{color:rgba(255,255,255,.74);font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}
 .foot-links a:hover{color:#fff}
-.foot .copy{color:rgba(255,255,255,.6);font-size:.84rem}
+.foot .copy{color:rgba(255,255,255,.6);font-size:.82rem}
 @media(max-width:620px){ .foot-inner{flex-direction:column;align-items:flex-start;gap:14px} }
 
 /* ---------- Reveal animation ---------- */
@@ -406,6 +493,10 @@ form.wl .pill{justify-content:center;margin-top:4px}
   .reveal,[data-stagger] > *{opacity:1 !important;transform:none !important}
   .scroll-cue .mouse::after{display:none}
   html{scroll-behavior:auto}
+  /* Per-char headings are filled immediately by JS (initHeadingFill runs in the
+     reduced-motion path); this guards the no-JS case so text stays readable. */
+  .fill-head{color:var(--fill-on)}
+  .fill-head .ch{color:var(--fill-on) !important}
 }
 </style>
 </head>
@@ -420,6 +511,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
       <a href="#project">Project</a>
       <a href="#tokenization">Tokenization</a>
       <a href="#monaco1">MONACO1</a>
+      <a href="#gallery">Gallery</a>
       <a href="#waitlist">Waitlist</a>
     </nav>
     <div class="nav-cta-wrap">
@@ -453,11 +545,14 @@ form.wl .pill{justify-content:center;margin-top:4px}
 <!-- ===================== 2 · PROJECT ===================== -->
 <section class="sec" id="project" aria-labelledby="project-h">
   <div class="wrap">
-    <div class="grid-asym reveal">
-      <div class="sec-head">
-        <span class="eyebrow"><span class="ring"></span>The project</span>
-        <h2 id="project-h" style="margin-top:18px">A landmark on the Côte d'Azur.</h2>
-        <div class="chips" style="margin-top:22px">
+    <div class="head-block reveal">
+      <span class="eyebrow"><span class="ring"></span>The project</span>
+      <h2 id="project-h" class="fill-head">A landmark on the Côte d'Azur.</h2>
+    </div>
+
+    <div class="grid-asym reveal" style="align-items:start">
+      <div>
+        <div class="chips">
           <span class="chip">Premium real estate</span>
           <span class="chip">Monaco</span>
           <span class="chip">Exclusivity</span>
@@ -512,11 +607,12 @@ form.wl .pill{justify-content:center;margin-top:4px}
 <!-- ===================== 3 · TOKENIZATION ===================== -->
 <section class="sec" id="tokenization" aria-labelledby="token-h" style="background:var(--pearl);border-block:1px solid var(--line)">
   <div class="wrap">
+    <div class="head-block reveal">
+      <span class="eyebrow"><span class="ring"></span>Tokenization</span>
+      <h2 id="token-h" class="fill-head accent">A clearer way into premium real estate.</h2>
+    </div>
     <div class="grid-asym reveal" style="align-items:start">
-      <div class="sec-head">
-        <span class="eyebrow"><span class="ring"></span>Tokenization</span>
-        <h2 id="token-h" style="margin-top:18px">A clearer way into premium real estate.</h2>
-      </div>
+      <div></div>
       <div>
         <p class="lead">MONACO1 (M1) represents a tokenized interest connected to a premium Monaco real-estate opportunity — designed to be transparent, considered and accessible.</p>
       </div>
@@ -561,9 +657,11 @@ form.wl .pill{justify-content:center;margin-top:4px}
         <img loading="lazy" src="assets/img/img-30.jpg" alt="A teal and black Formula 1 car on the Monaco circuit, suggesting precision and technology." />
       </div>
       <div class="reveal">
-        <span class="eyebrow"><span class="ring"></span>AI &amp; real estate</span>
-        <h2 id="ai-h" style="margin-top:18px">Precision, applied to property.</h2>
-        <p class="lead" style="margin-top:20px">We pair premium real estate with modern, data-driven infrastructure — using AI-era tooling to inform diligence, structuring and reporting.</p>
+        <div class="head-block" style="margin-bottom:20px">
+          <span class="eyebrow"><span class="ring"></span>AI &amp; real estate</span>
+          <h2 id="ai-h" class="fill-head accent">Precision, applied to property.</h2>
+        </div>
+        <p class="lead">We pair premium real estate with modern, data-driven infrastructure — using AI-era tooling to inform diligence, structuring and reporting.</p>
         <div class="feature-row" data-stagger>
           <div class="f">
             <span class="ix">i.</span>
@@ -603,9 +701,11 @@ form.wl .pill{justify-content:center;margin-top:4px}
       </div>
 
       <div class="reveal">
-        <span class="eyebrow"><span class="ring"></span>The token · M1</span>
-        <h2 id="m1-h" style="margin-top:18px">MONACO1, in a single token.</h2>
-        <p class="lead" style="margin-top:20px">M1 is the digital expression of the MONACO1 opportunity — a tokenized interest that connects investors to premium Monaco real estate within a regulated framework, with the rigour of a Securitize-grade approach.</p>
+        <div class="head-block" style="margin-bottom:20px">
+          <span class="eyebrow"><span class="ring"></span>The token · M1</span>
+          <h2 id="m1-h" class="fill-head on-dark">MONACO1, in a single token.</h2>
+        </div>
+        <p class="lead">M1 is the digital expression of the MONACO1 opportunity — a tokenized interest that connects investors to premium Monaco real estate within a regulated framework, with the rigour of a Securitize-grade approach.</p>
 
         <ul class="benefits" data-stagger>
           <li>
@@ -631,16 +731,17 @@ form.wl .pill{justify-content:center;margin-top:4px}
   </div>
 </section>
 
-<!-- ===================== 6 · BROCHURE & MEDIA ===================== -->
+<!-- ===================== 6 · BROCHURE & MEDIA + GALLERY ===================== -->
 <section class="sec" id="media" aria-labelledby="media-h">
   <div class="wrap">
+    <div class="head-block reveal wide">
+      <span class="eyebrow"><span class="ring"></span>Brochure &amp; media</span>
+      <h2 id="media-h" class="fill-head">See the project in full.</h2>
+    </div>
     <div class="grid-asym reveal" style="align-items:end;margin-bottom:48px">
-      <div class="sec-head">
-        <span class="eyebrow"><span class="ring"></span>Brochure &amp; media</span>
-        <h2 id="media-h" style="margin-top:18px">See the project in full.</h2>
-      </div>
+      <div></div>
       <div>
-        <p class="lead">The presentation film, the brochure and a selection of client visuals — everything you need to understand Trump Tower Monaco and the MONACO1 token.</p>
+        <p class="lead">The presentation film, the brochure and a visual archive — everything you need to understand Trump Tower Monaco and the MONACO1 token.</p>
       </div>
     </div>
 
@@ -661,15 +762,51 @@ form.wl .pill{justify-content:center;margin-top:4px}
         </a>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- visuals gallery -->
-    <div class="visuals" data-stagger aria-label="Project visuals">
-      <a class="tile wide" href="assets/img/img-08.jpg"><img loading="lazy" src="assets/img/img-08.jpg" alt="A black Bugatti parked outside the Monte-Carlo Casino at dusk." /></a>
-      <a class="tile" href="assets/img/img-24.jpg"><img loading="lazy" src="assets/img/img-24.jpg" alt="A poolside coconut beside a Trump Tower Monaco brochure on marble, yachts in the background." /></a>
-      <a class="tile" href="assets/img/img-16.jpg"><img loading="lazy" src="assets/img/img-16.jpg" alt="A couple dining with a sea view at dusk." /></a>
-      <a class="tile" href="assets/img/img-07.jpg"><img loading="lazy" src="assets/img/img-07.jpg" alt="A chef plating a dish in a luxury kitchen overlooking Monaco." /></a>
-      <a class="tile" href="assets/img/img-01.jpg"><img loading="lazy" src="assets/img/img-01.jpg" alt="A woman aboard a yacht in the Monaco harbor." /></a>
-      <a class="tile" href="assets/img/img-29.jpg"><img loading="lazy" src="assets/img/img-29.jpg" alt="A branded Trump Tower Monaco champagne bottle on ice against a blue background." /></a>
+<!-- ===================== 6b · GALLERY (pinned stack-zoom) ===================== -->
+<section class="gallery" id="gallery" aria-labelledby="gallery-h">
+  <!-- Header block (architectural, left-aligned) -->
+  <div class="wrap" style="padding-top:clamp(72px,9vw,120px)">
+    <div class="head-block reveal wide">
+      <span class="eyebrow"><span class="ring"></span>Visual archive</span>
+      <h2 id="gallery-h" class="fill-head">A closer look at MONACO1.</h2>
+    </div>
+  </div>
+
+  <!-- Pinned scroll-scrubbed centered DECK. The .gallery-stage is what GSAP pins;
+       the .gallery-track gives the scroll length to scrub the deck through. -->
+  <div class="gallery-track" id="galleryTrack" aria-hidden="true">
+    <div class="gallery-stage" id="galleryStage">
+      <figure class="g-img"><img src="assets/img/img-15.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-08.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-22.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-16.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-01.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-24.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-26.jpg" alt="" /></figure>
+      <figure class="g-img"><img src="assets/img/img-07.jpg" alt="" /></figure>
+      <div class="gallery-statement" id="galleryStatement">
+        <h2 class="fill-head">Live the Riviera.</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reduced-motion / no-GSAP static fallback (responsive rounded grid + static statement) -->
+  <div class="wrap gallery-fallback" id="galleryFallback">
+    <div class="grid" aria-label="Project visual archive">
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-15.jpg" alt="Close render of the curved Trump Tower Monaco beside the marina at sunset." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-08.jpg" alt="A black Bugatti parked outside the Monte-Carlo Casino at dusk." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-22.jpg" alt="A swimmer in a glass infinity pool suspended over the Monaco harbor." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-16.jpg" alt="A couple dining with a sea view at dusk." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-01.jpg" alt="A woman aboard a yacht in the Monaco harbor." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-24.jpg" alt="A poolside coconut beside a Trump Tower Monaco brochure on marble, yachts in the background." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-26.jpg" alt="Bedroom interior overlooking the harbor at sunset." /></div>
+      <div class="fb-tile"><img loading="lazy" src="assets/img/img-07.jpg" alt="A chef plating a dish in a luxury kitchen overlooking Monaco." /></div>
+    </div>
+    <div class="statement">
+      <h2 class="fill-head">Live the Riviera.</h2>
     </div>
   </div>
 </section>
@@ -679,9 +816,11 @@ form.wl .pill{justify-content:center;margin-top:4px}
   <div class="wrap">
     <div class="wl-grid">
       <div class="reveal">
-        <span class="eyebrow"><span class="ring"></span>Investor waiting list</span>
-        <h2 id="wl-h" style="margin-top:18px">Register your interest.</h2>
-        <p class="lead" style="margin-top:18px">Join the MONACO1 waitlist to receive investor access, documentation and updates as the platform opens.</p>
+        <div class="head-block" style="margin-bottom:18px">
+          <span class="eyebrow"><span class="ring"></span>Investor waiting list</span>
+          <h2 id="wl-h" class="fill-head">Register your interest.</h2>
+        </div>
+        <p class="lead">Join the MONACO1 waitlist to receive investor access, documentation and updates as the platform opens.</p>
 
         <form class="wl" id="wlForm" novalidate>
           <div class="field">
@@ -738,7 +877,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
   <img class="bg" src="assets/img/img-19.jpg" alt="Monaco at blue hour, Trump Tower lit against cool-blue tones." loading="lazy" />
   <div class="wrap closer-inner">
     <span class="eyebrow light"><span class="ring"></span>MONACO1 · Investor access</span>
-    <h2 id="cta-h">Be among the first to access MONACO1.</h2>
+    <h2 id="cta-h" class="fill-head on-dark">Be among the first to access MONACO1.</h2>
     <p class="lead">Register your interest today and step into a new generation of real-estate investment infrastructure.</p>
     <a href="#waitlist" class="pill pill-light">Join the waitlist
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -760,14 +899,28 @@ form.wl .pill{justify-content:center;margin-top:4px}
 
 <script type="module">
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hasGSAP = typeof window.gsap !== 'undefined' && typeof window.ScrollTrigger !== 'undefined';
+
+  let lenis = null;
 
   /* ---- Lenis smooth scroll (gated behind reduced-motion) ---- */
   if (!reduce) {
     try {
       const { default: Lenis } = await import('lenis');
-      const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
-      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
-      requestAnimationFrame(raf);
+      lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+
+      if (hasGSAP) {
+        // Integrate Lenis with GSAP ScrollTrigger; GSAP's ticker drives Lenis rAF.
+        gsap.registerPlugin(ScrollTrigger);
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+      } else {
+        // No GSAP: run our own rAF loop.
+        const raf = (time) => { lenis.raf(time); requestAnimationFrame(raf); };
+        requestAnimationFrame(raf);
+      }
+
       // anchor links → lenis scroll
       document.querySelectorAll('a[href^="#"]').forEach(a => {
         a.addEventListener('click', e => {
@@ -779,6 +932,268 @@ form.wl .pill{justify-content:center;margin-top:4px}
         });
       });
     } catch (err) { /* network/import failure: native scroll remains */ }
+  }
+
+  /* ===========================================================
+     HEADING COLOR-FILL — per-character, sequential in reading order
+     (like artez's .char divs). Split each .fill-head into <span class="ch">
+     glyphs, preserving real spaces so the heading still wraps at words.
+     A per-heading ScrollTrigger then tints char 0 first, char 1 next, … all
+     the way through the sentence, CONTINUING ACROSS LINE BREAKS (line-2 chars
+     just carry higher indices, so they fill after line-1 finishes).
+     =========================================================== */
+
+  // Parse a CSS color (rgb/rgba/#hex or a resolved computed value) to [r,g,b,a].
+  function parseColor(input){
+    if (!input) return [0,0,0,1];
+    let s = String(input).trim();
+    if (s[0] === '#'){
+      if (s.length === 4){ // #rgb
+        return [parseInt(s[1]+s[1],16), parseInt(s[2]+s[2],16), parseInt(s[3]+s[3],16), 1];
+      }
+      return [parseInt(s.slice(1,3),16), parseInt(s.slice(3,5),16), parseInt(s.slice(5,7),16), 1];
+    }
+    const m = s.match(/rgba?\(([^)]+)\)/i);
+    if (m){
+      const p = m[1].split(',').map(v => parseFloat(v.trim()));
+      return [p[0]||0, p[1]||0, p[2]||0, (p[3] === undefined ? 1 : p[3])];
+    }
+    return [0,0,0,1];
+  }
+  // Linear interpolate between two rgba arrays by t (0..1) → css rgba() string.
+  function lerpColor(a, b, t){
+    const r = Math.round(a[0] + (b[0]-a[0])*t);
+    const g = Math.round(a[1] + (b[1]-a[1])*t);
+    const bl = Math.round(a[2] + (b[2]-a[2])*t);
+    const al = (a[3] + (b[3]-a[3])*t);
+    return 'rgba(' + r + ',' + g + ',' + bl + ',' + al.toFixed(3) + ')';
+  }
+  // Resolve the MUTED (start) and FILLED (end) colors for a heading from its
+  // CSS custom props, so accent / on-dark variants are honored automatically.
+  function headColors(el){
+    const cs = getComputedStyle(el);
+    const filled = parseColor(cs.getPropertyValue('--fill-on'));
+    const muted  = parseColor(cs.getPropertyValue('--fill-off'));
+    return { muted, filled };
+  }
+  // Split heading text into per-character .ch spans IN READING ORDER. Letters of
+  // a word are grouped in a .word wrapper (white-space:nowrap) so words never
+  // break mid-word; real spaces between words are emitted as their own text so
+  // the heading STILL WRAPS naturally at spaces. Returns the .ch spans in order.
+  function splitHeading(el){
+    if (el.dataset.split === '1') return Array.from(el.querySelectorAll('.ch'));
+    const text = el.textContent;
+    el.textContent = '';
+    const frag = document.createDocumentFragment();
+    const spans = [];
+    let word = null;
+    const flushWord = () => { if (word){ frag.appendChild(word); word = null; } };
+
+    for (const chr of text){
+      if (chr === ' '){
+        flushWord();
+        frag.appendChild(document.createTextNode(' ')); // real break opportunity
+      } else {
+        if (!word){
+          word = document.createElement('span');
+          word.className = 'word';
+        }
+        const span = document.createElement('span');
+        span.className = 'ch';
+        span.textContent = chr;
+        word.appendChild(span);
+        spans.push(span);
+      }
+    }
+    flushWord();
+    el.appendChild(frag);
+    el.dataset.split = '1';
+    return spans;
+  }
+
+  function initHeadingFill(){
+    document.querySelectorAll('.fill-head').forEach((el) => {
+      const spans = splitHeading(el);
+      const { muted, filled } = headColors(el);
+      const total = spans.length;
+
+      // Reduced motion / no GSAP: render every char FILLED immediately.
+      // The gallery statement also renders FILLED immediately — it lives inside
+      // the pinned stage (position:absolute), so a scroll trigger on it would be
+      // unreliable; it's revealed by the deck timeline's opacity instead.
+      if (reduce || !hasGSAP || el.closest('#galleryStatement')){
+        const filledCss = lerpColor(muted, filled, 1);
+        spans.forEach(s => { s.style.color = filledCss; });
+        return;
+      }
+
+      // Start muted.
+      const mutedCss = lerpColor(muted, filled, 0);
+      spans.forEach(s => { s.style.color = mutedCss; });
+
+      // Gallery statement is animated by the deck timeline, but its fill should
+      // still resolve — give it a plain trigger too (it scrolls into view late).
+      gsap.to({}, {
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 85%',
+          end: 'top 45%',
+          scrub: true,
+          onUpdate: (self) => {
+            const filledAmt = self.progress * total; // chars filled so far
+            for (let j = 0; j < total; j++){
+              const t = Math.min(Math.max(filledAmt - j, 0), 1);
+              spans[j].style.color = lerpColor(muted, filled, t);
+            }
+          }
+        }
+      });
+    });
+  }
+
+  /* ===========================================================
+     GALLERY — centered DECK (stack) that advances; front card exits in 3D.
+     The deck is a stack of cards, all dead-centered. The page pins on the
+     stage and scroll DRIVES the deck: the front card grows, slants on Y, and
+     slides out of the frame (it LEAVES, never fades); the next card advances
+     forward and the whole deck eases up. After the last card exits, a centered
+     statement line fades+scales in. (Reference: artez.framer.website.)
+
+     ---- Deck math (per card i, with head = progress * N, depth d = i - head) ----
+     d >= 0 (still in the deck, behind/at front):
+       scale      = 1 - d*DECK_SCALE_STEP            (back cards smaller)
+       translateY = -d*DECK_OFFSET_VH  (vh)          (deck stacks UPWARD)
+       rotateX    = 5deg                             (stack tilt)
+       rotateY    = (1 - min(d,1)) * 8deg            (deck "follows" the leader)
+       opacity    = d>3 ? clamp(1-(d-3),0,1) : 1     (~VISIBLE_CARDS visible)
+       z-index    = 100 - i
+     d < 0 (this card is the leader and is EXITING), e = -d (0 → 1+):
+       scale      = 1 + e*EXIT_SCALE                 (grows toward viewer)
+       rotateY    = e*EXIT_RY_DEG                    ("coming toward you" slant)
+       rotateX    = e*8deg
+       translateY = -e*EXIT_TY_VH (vh)               (moves out of frame, up)
+       translateZ = e*420px                          (toward camera)
+       opacity    = 1                                (must LEAVE, never fade)
+       z-index    = high (front)
+     transform = translate(-50%,-50%) translateY(ty) translateZ(tz)
+                  rotateX(rx) rotateY(ry) scale(s)
+     =========================================================== */
+
+  // ---- Tuning constants (exposed for easy adjustment) ----
+  const FRONT_VH        = 42;   // front card height in vh (set in CSS too)
+  const DECK_OFFSET_VH  = 7;    // each deeper card sits this many vh higher
+  const DECK_SCALE_STEP = 0.08; // each deeper card is this much smaller
+  const EXIT_SCALE      = 1.6;  // how much the exiting card grows (1 + e*this)
+  const EXIT_RY_DEG     = 32;   // Y-axis slant of the exiting card (deg)
+  const EXIT_TY_VH      = 95;   // how far the exiting card travels DOWN & out (vh)
+  const VISIBLE_CARDS   = 4;    // how many cards peek in the deck
+  const EXIT_TZ_PX      = 420;  // exiting card pulled toward the camera (px)
+  const STACK_RX_DEG    = 5;    // stack tilt for cards in the deck (deg)
+  const FOLLOW_RY_DEG   = 8;    // how much the deck "follows" the leader (deg)
+  const EXIT_RX_DEG     = 8;    // exiting card forward tilt (deg)
+
+  function initGallery(){
+    const track = document.getElementById('galleryTrack');
+    const stage = document.getElementById('galleryStage');
+    const statement = document.getElementById('galleryStatement');
+    const fallback = document.getElementById('galleryFallback');
+
+    const imgs = stage ? Array.from(stage.querySelectorAll('.g-img')) : [];
+    const N = imgs.length;
+
+    // Reduced motion or no GSAP → static rounded grid + static statement.
+    if (reduce || !hasGSAP || N === 0) {
+      if (track) track.style.display = 'none';
+      if (fallback) fallback.style.display = 'block';
+      return;
+    }
+
+    // Track length ≈ N*100% so there's ample scrub, plus a trailing beat for
+    // the statement. End is computed off the track top.
+    const END = (N * 100) + '%';
+
+    // Compose the full transform string for a card at depth d (= i - head).
+    function cardTransform(d){
+      if (d >= 0){
+        // In the deck (behind/at front). d=0 is the current front card.
+        const s  = 1 - d * DECK_SCALE_STEP;
+        const ty = -d * DECK_OFFSET_VH;                 // vh, stacks upward
+        const rx = STACK_RX_DEG;
+        const ry = (1 - Math.min(d, 1)) * FOLLOW_RY_DEG;
+        const op = d > (VISIBLE_CARDS - 1)
+          ? Math.min(Math.max(1 - (d - (VISIBLE_CARDS - 1)), 0), 1)
+          : 1;
+        return {
+          transform: 'translate(-50%,-50%) translateY(' + ty + 'vh) translateZ(0px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale(' + s + ')',
+          opacity: op
+        };
+      } else {
+        // Leader EXITING. e runs 0 → 1+ as it leaves the frame.
+        const e  = -d;
+        const s  = 1 + e * EXIT_SCALE;
+        const ty = e * EXIT_TY_VH;                      // vh, DOWN & out (with page flow, like Artez)
+        const tz = e * EXIT_TZ_PX;                       // toward camera
+        const rx = -e * EXIT_RX_DEG;                     // tilt forward as it dives down
+        const ry = e * EXIT_RY_DEG;
+        return {
+          transform: 'translate(-50%,-50%) translateY(' + ty + 'vh) translateZ(' + tz + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale(' + s + ')',
+          opacity: 1                                     // never fades; it leaves
+        };
+      }
+    }
+
+    function applyZ(img, i, d){
+      // Exiting cards (d<0) ride above the deck; deck cards layer 100 - i.
+      img.style.zIndex = d < 0 ? (300 - i) : (100 - i);
+    }
+
+    // Paint the deck for a given scroll progress (0..1).
+    function renderDeck(p){
+      const head = p * N; // 0 → N (playhead through the deck)
+      imgs.forEach((img, i) => {
+        const d = i - head;
+        const { transform, opacity } = cardTransform(d);
+        img.style.transform = transform;
+        img.style.opacity = opacity;
+        applyZ(img, i, d);
+      });
+
+      // Statement: fade+scale in over the last slot, once the final card exits.
+      const stT = gsap.utils.clamp(0, 1, (head - (N - 0.6)) / 0.6);
+      statement.style.opacity = stT;
+      statement.style.transform = 'translate(-50%,-50%) scale(' + (0.92 + stT * 0.08) + ')';
+    }
+
+    // Initial deck state.
+    renderDeck(0);
+
+    ScrollTrigger.create({
+      trigger: track,
+      start: 'top top',
+      end: '+=' + END,
+      pin: stage,
+      pinSpacing: true,
+      scrub: 1,
+      onUpdate: (self) => renderDeck(self.progress),
+      onRefresh: (self) => renderDeck(self.progress)
+    });
+  }
+
+  // Kick off effects. The heading splitter ALWAYS runs (reduced-motion/no-GSAP
+  // paths render every char in its FILLED color immediately).
+  if (hasGSAP && !reduce) {
+    gsap.registerPlugin(ScrollTrigger);
+    initGallery();
+    initHeadingFill();
+    // Recompute once images/fonts have loaded (pin distances depend on layout).
+    window.addEventListener('load', () => ScrollTrigger.refresh());
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => ScrollTrigger.refresh());
+    }
+  } else {
+    // Reduced motion or no GSAP: static gallery fallback + fully-filled headings.
+    initGallery();
+    initHeadingFill();
   }
 </script>
 
