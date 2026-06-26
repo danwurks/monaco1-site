@@ -18,12 +18,12 @@
 <title>MONACO1 — Trump Tower Monaco, tokenized · SCM Monaco</title>
 <meta name="description" content="Tokenized access to premium Monaco real estate. MONACO1 (M1) — a new generation of real-estate investment infrastructure within a regulated framework. Join the investor waitlist." />
 
-<!-- Fonts (matching maravilla.framer.website): Libre Caslon Display = serif headings, DM Sans = body/UI, Gochi Hand = handwritten accent.
-     Clash Grotesk (Fontshare) = buttons/CTA only (var(--btn)), per studio-lead request. -->
+<!-- Fonts — TWO ONLY (studio-lead): Libre Caslon Display (serif headings/accents, var(--serif)) + Clash Grotesk
+     (Fontshare; every sans token: --display/--body/--btn/--script). DM Sans + Gochi Hand removed. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Libre+Caslon+Display:ital@0;1&family=Gochi+Hand&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display:ital@0;1&display=swap" rel="stylesheet" />
 <link href="https://api.fontshare.com/v2/css?f[]=clash-grotesk@400,500,600,700&display=swap" rel="stylesheet" />
 
 <!-- Lenis smooth scroll via import map -->
@@ -43,15 +43,19 @@
   --paper:#EDF1F6; --pearl:#FCFDFF; --ink:#15252B; --muted:#566970;   /* cooled from warm cream → clean white/blue minimalism */
   --line:rgba(21,37,43,.13); --azure:#1C6FB0; --azure-deep:#155E9C;
   --sea:#0E2A47; --glass:#DCE9EA; --sky:#8FC2DE;
-  /* Type system, matching maravilla.framer.website:
-     --serif = Libre Caslon Display (high-contrast serif headings); --display/--body = DM Sans; --script = Gochi Hand accent. */
+  /* Type system — TWO fonts only:
+     --serif = Libre Caslon Display (headings + italic accents); --display/--body/--btn/--script = Clash Grotesk (all sans). */
   --serif:"Libre Caslon Display",Georgia,"Times New Roman",serif;
-  --display:"DM Sans",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  --body:"DM Sans",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  --btn:"Clash Grotesk","DM Sans",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; /* buttons/CTA only */
-  --script:"Gochi Hand","Bradley Hand","Comic Sans MS",cursive;
+  /* TWO fonts only: Libre Caslon Display (--serif) + Clash Grotesk (every sans token below). */
+  --display:"Clash Grotesk",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --body:"Clash Grotesk",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --btn:"Clash Grotesk",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  --script:"Clash Grotesk",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   --maxw:1280px;
   --r:18px;
+  /* spacing system — ONE vertical rhythm + ONE horizontal gutter across the whole page (full-bleed sections opt out with padding:0) */
+  --sec-y:clamp(80px,11vw,148px);
+  --gutter:clamp(20px,3.6vw,28px);
   /* heading color-fill tints (decorative muted -> readable filled) */
   --fill-muted:rgba(21,37,43,.20);
   --fill-muted-dark:rgba(255,255,255,.18);
@@ -95,8 +99,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 }
 .skip:focus{left:0}
 
-.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:28px}
-@media(max-width:560px){ .wrap{padding-inline:20px} }
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gutter)}
 
 /* ---------- Type scale (Archivo — condensed architectural) ---------- */
 .eyebrow{
@@ -287,7 +290,7 @@ body.menu-open .nav-logo{color:#fff}
    that the scroll cue moved out to the centre-right badge. */
 .hero-content{
   display:flex;flex-direction:column;align-items:center;text-align:center;
-  width:100%;padding:0 24px clamp(22px,4vh,52px);
+  width:100%;padding:0 var(--gutter) clamp(22px,4vh,52px);
   /* drifts up + fades as the next section slides over it (parallax depth) */
   transform:translateY(calc(-28px * var(--coverP,0)));opacity:calc(1 - .95 * var(--coverP,0));
   will-change:transform,opacity;
@@ -432,7 +435,7 @@ html.coin-live #coin-anchor::before{ content:none; }
 
 /* ---------- Section scaffolding ---------- */
 section{position:relative}
-.sec{padding-block:clamp(80px,11vw,148px)}
+.sec{padding-block:var(--sec-y)}
 .sec-head{max-width:none}
 /* Architectural header block: eyebrow, oversized left-aligned condensed heading.
    Widened so typical headings sit on 1–2 lines, not 3. (FIX 3) */
@@ -517,7 +520,8 @@ section{position:relative}
    LEFT-aligned: Caslon head + lead on the left · the 3 points as a hairline divider-list on the
    right. NO dotted canvas, NO centred big numerals. Does NOT touch `.ai-sec` position/z/margin →
    the peel→cover mechanism is untouched. ---- */
-#ai{ overflow:hidden; text-align:left; }
+#ai{ overflow:hidden; text-align:left;
+  --ink:#FBF8F2; --muted:rgba(255,255,255,.78); --line:rgba(255,255,255,.16);   /* colored beat: dark azure ground (.ai-sec) → flip text/border tokens light */ }
 #ai .ai2-grid{
   display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(34px,5.5vw,88px);
   align-items:start; max-width:1140px; margin-inline:auto;
@@ -544,7 +548,7 @@ section{position:relative}
 #ai .ai2-item:last-child{ border-bottom:1px solid var(--line); }
 #ai .ai2-ix{
   flex:none; min-width:1.7em; font-family:var(--serif); font-weight:400; line-height:1;
-  color:var(--azure-deep); font-size:clamp(1.4rem,1.8vw,1.7rem); letter-spacing:.01em;
+  color:var(--sky); font-size:clamp(1.4rem,1.8vw,1.7rem); letter-spacing:.01em;
 }
 #ai .ai2-item h3{
   font-family:var(--serif); font-weight:400; letter-spacing:-.01em; line-height:1.16;
@@ -561,12 +565,12 @@ section{position:relative}
 /* ---- #tokenization → "Featured Work" STAGGERED SHOWCASE (melyn layout) · landing-page fonts (Caslon/DM Sans/Clash) ---- */
 #tokenization{ text-align:left; }                 /* override the leftover centred-showcase rule above */
 .wk-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:24px 40px; flex-wrap:wrap; }
-.wk-head-l{ max-width:20ch; }
+.wk-head-l{ max-width:none; }   /* font-independent measure → heading sits on 2 lines (the old 20ch was measured in the small inherited font, choking the big Caslon head to 4) */
 .wk-head .eyebrow{ margin-bottom:14px; }
 .wk-h{
   font-family:var(--serif); font-weight:400; text-transform:none;
   font-size:clamp(2rem,4.4vw,3.6rem); line-height:1.08; letter-spacing:-.015em;
-  color:var(--ink); margin:0; text-wrap:balance;
+  color:var(--ink); margin:0; max-width:30ch; text-wrap:balance;   /* 30ch (heading-font) → always 2 lines; balance evens "A clearer way into / premium real estate." */
 }
 .wk-all{
   font-family:var(--btn); font-weight:600; text-transform:uppercase; letter-spacing:.08em;
@@ -729,7 +733,7 @@ section{position:relative}
 }
 
 /* ---------- AI ---------- */
-.ai-sec{position:relative;z-index:3;margin-top:var(--ai-cover,-46svh);background:var(--pearl);border-block:1px solid var(--line)}  /* z:3 ABOVE #monaco1 (z:2) + small tuck → #ai rises over the still pinned photo to COVER it ("good cover" value). Larger detaches the next section — keep modest. */
+.ai-sec{position:relative;z-index:3;margin-top:var(--ai-cover,-46svh);background:var(--azure-deep);border-block:1px solid var(--line)}  /* z:3 ABOVE #monaco1 (z:2) + small tuck → #ai rises over the still pinned photo to COVER it ("good cover" value). Larger detaches the next section — keep modest. */
 .ai-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(32px,5vw,68px);align-items:center}
 .ai-fig{aspect-ratio:4/3;border-radius:var(--r);overflow:hidden}
 .ai-fig img{width:100%;height:100%;object-fit:cover}
@@ -747,7 +751,7 @@ section{position:relative}
 .tr-photo>img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 58%; }
 .tr-photo .tr-photo-scrim{ position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(180deg, rgba(8,16,26,.30) 0%, rgba(8,16,26,.06) 40%, rgba(8,16,26,.50) 100%); }
-.tr-panel{ position:relative; z-index:1; background:var(--pearl); will-change:transform; }
+.tr-panel{ position:relative; z-index:1; background:#F2F7FC; will-change:transform; }   /* faint azure tint (was pearl) — subtle colour on the M1 panel */
 /* dotted canvas backdrop — a radial mask fades the dots out toward the section edges */
 .tr-dots{
   position:absolute; inset:0; z-index:0; pointer-events:none;
@@ -878,7 +882,7 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders �
 .mb-right{ left:var(--mb-right-x); transform:translate(-50%,-50%); }
 .mb-right em{ font-style:italic; }   /* DIAL: Caslon Display ships no true italic → faux slant */
 /* bottom-centre: short description + CTA, over the gradient */
-.mb-foot{ position:relative; z-index:3; width:100%; text-align:center; padding:0 24px clamp(34px,6vh,68px); }
+.mb-foot{ position:relative; z-index:3; width:100%; text-align:center; padding:0 var(--gutter) clamp(34px,6vh,68px); }
 .mb-desc{
   font-family:var(--btn,var(--display)); font-weight:400; color:rgba(255,255,255,.94);   /* Clash Grotesk */
   font-size:clamp(1rem,1.7vw,1.35rem); line-height:1.3; letter-spacing:-.006em;
@@ -902,20 +906,20 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders �
 
 /* ---------- GALLERY (Maravilla "Care in every detail": CSS STICKY card stack) ---------- */
 .gallery{
-  background:linear-gradient(180deg,var(--pearl),var(--paper));
+  background:linear-gradient(180deg,#EDF2F7,#E4EBF3);   /* soft cool sea-tint ground → dark cards pop, gentle colour beat */
   border-block:1px solid var(--line);
   position:relative;
 }
-.gallery-head{ padding-top:clamp(72px,9vw,120px); padding-bottom:clamp(26px,4vw,52px); }
+.gallery-head{ padding-top:clamp(72px,9vw,120px); padding-bottom:clamp(8px,1.4vw,20px); }   /* tight bottom → header tucks DOWN close to the cards */
 /* gallery header — centred, Caslon, normal + italic mix (like the media "A Full Picture"); replaced the boring left-aligned line */
 #gallery .gallery-head{ text-align:center; }
-#gallery .gallery-head .head-block{ margin-inline:auto; }
+#gallery .gallery-head .head-block{ margin-inline:auto; margin-bottom:clamp(12px,1.6vw,24px); }   /* tuck the header DOWN near the cards — overrides the global .head-block 40-80px gap */
 #gallery .g-heading{
   font-family:var(--serif); font-weight:400; text-transform:none; color:var(--ink);
-  font-size:clamp(2.4rem,6vw,5rem); line-height:1.04; letter-spacing:-.015em;
-  margin:0 auto; max-width:18ch; text-wrap:balance;
+  font-size:clamp(2.4rem,6vw,5rem); line-height:1.2; letter-spacing:-.015em;   /* opened from 1.04 — the 2 lines were too tight */
+  margin:0 auto; max-width:22ch; text-wrap:balance;
 }
-#gallery .g-heading em{ font-style:italic; display:block; }   /* "every detail" drops to its own line (faux-slant — Caslon Display has no true italic, same as .mb-right em) */
+#gallery .g-heading em{ font-style:italic; display:block; color:var(--azure-deep); }   /* "MONACO1." in brand azure (like the Precision/#ai blue); "A closer look at" stays ink */   /* "every detail" drops to its own line (faux-slant — Caslon Display has no true italic, same as .mb-right em) */
 /* Each card is position:sticky and centred. As you scroll, the current card sticks while the NEXT
    scrolls up from below and COVERS it (later DOM paints on top). Pure native scroll -> seamless
    (no pin, no snap), one card at a time (no peek). --g-h = card height, --g-top = (100svh - --g-h)/2
@@ -1056,7 +1060,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
   content:"";position:absolute;inset:0;z-index:-1;
   background:linear-gradient(180deg,rgba(10,24,38,.62),rgba(10,24,38,.5) 50%,rgba(8,18,30,.9));
 }
-.closer-inner{text-align:center;padding-block:130px 60px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.closer-inner{text-align:center;padding-block:var(--sec-y);flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center}
 .closer .eyebrow{margin-bottom:24px;justify-content:center}
 .closer h2{max-width:18ch;margin-inline:auto;text-shadow:0 2px 30px rgba(0,0,0,.3)}
 /* closer heading uses on-dark fill variant */
@@ -1091,10 +1095,12 @@ form.wl .pill{justify-content:center;margin-top:4px}
 .foot-track{display:flex;width:max-content;animation:footscroll 55s linear infinite;will-change:transform}
 .foot-track img{width:clamp(210px,23vw,340px);height:clamp(220px,27vw,400px);object-fit:cover;display:block;flex:none}
 @keyframes footscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-/* giant brand wordmark, baseline cropped a touch like the reference */
+/* giant brand wordmark — FULL horizontal bleed (vw-scaled, edge to edge) + slid out of bounds so only the
+   TOP HALF of the letters shows (cropped by .foot{overflow:hidden} via a negative margin-bottom). Editorial. */
 .foot-brand{font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:-.02em;
-  line-height:.82;color:var(--pearl);font-size:clamp(4.2rem,17vw,15rem);text-align:center;
-  white-space:nowrap;margin-top:18px;margin-bottom:-.08em;user-select:none;pointer-events:none}
+  line-height:.75;color:var(--pearl);font-size:24vw;text-align:center;display:block;                 /* JS (fitFootBrand) auto-sizes to EXACT edge-to-edge; 24vw is just the no-JS fallback */
+  white-space:nowrap;margin-top:22px;margin-bottom:-.18em;                                            /* DIAL margin-bottom: crop depth — now ~1/4 cut (top 3/4 shows). MORE negative = more cropped */
+  user-select:none;pointer-events:none}
 @media(max-width:620px){ .foot-top{flex-direction:column;align-items:flex-start;gap:12px} }
 @media(prefers-reduced-motion:reduce){ .foot-track{animation:none} }
 
@@ -1397,7 +1403,6 @@ form.wl .pill{justify-content:center;margin-top:4px}
     <!-- header row: eyebrow + Caslon head (left), bracketed link (right) — melyn featured-work layout, our fonts -->
     <div class="wk-head reveal">
       <div class="wk-head-l">
-        <span class="eyebrow"><span class="ring"></span>MONACO1 · How it works</span>
         <h2 id="token-h" class="fill-head wk-h">A clearer way into premium real estate.</h2>
       </div>
       <a class="wk-all" href="#monaco1">[ Explore the M1 token ]</a>
@@ -1528,7 +1533,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
   <!-- Heading sits above the pinned deck (Maravilla "Care in every detail"). -->
   <div class="wrap gallery-head">
     <div class="head-block reveal wide">
-            <h2 id="gallery-h" class="g-heading" aria-label="Care in every detail">Care in <em>every detail</em></h2>
+            <h2 id="gallery-h" class="g-heading" aria-label="A closer look at MONACO1.">A closer look at <em>MONACO1.</em></h2>
     </div>
   </div>
 
@@ -1704,6 +1709,24 @@ form.wl .pill{justify-content:center;margin-top:4px}
     <div class="foot-brand" aria-hidden="true">MONACO1</div>
   </footer>
 </section>
+
+<script>
+/* Footer MONACO1 — fit the wordmark to EXACT edge-to-edge width (font-metric-proof; the CSS vw is the no-JS fallback). */
+(function(){
+  var el = document.querySelector('.foot-brand'); if (!el) return;
+  function fit(){
+    var d = el.style.display;
+    el.style.fontSize = '100px'; el.style.display = 'inline-block';
+    var w = el.getBoundingClientRect().width;                                   // text width at 100px
+    el.style.display = d || 'block';
+    if (w > 0) el.style.fontSize = (100 * document.documentElement.clientWidth / w) + 'px';  // → spans the full viewport width
+  }
+  fit();
+  window.addEventListener('resize', fit, { passive: true });
+  window.addEventListener('load', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);   // refit once Caslon finishes loading
+})();
+</script>
 
 <script type="module">
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
