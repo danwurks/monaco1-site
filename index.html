@@ -40,7 +40,7 @@
 
 <style>
 :root{
-  --paper:#F5F1EA; --pearl:#FBF8F2; --ink:#15252B; --muted:#566970;
+  --paper:#EDF1F6; --pearl:#FCFDFF; --ink:#15252B; --muted:#566970;   /* cooled from warm cream → clean white/blue minimalism */
   --line:rgba(21,37,43,.13); --azure:#1C6FB0; --azure-deep:#155E9C;
   --sea:#0E2A47; --glass:#DCE9EA; --sky:#8FC2DE;
   /* Type system, matching maravilla.framer.website:
@@ -73,7 +73,7 @@ body{
   font-weight:400;
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
-  overflow-x:hidden;
+  overflow-x:clip;   /* clip (not hidden) → prevents horizontal scroll WITHOUT making body a scroll container, so position:sticky still works (gallery cards) */
 }
 img,video{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
@@ -217,17 +217,14 @@ body.menu-open .nav-burger{color:#fff}
 .nav-burger[aria-expanded="true"] .burger-lines i:nth-child(1){transform:translateY(5px) rotate(45deg)}
 .nav-burger[aria-expanded="true"] .burger-lines i:nth-child(2){transform:translateY(-5px) rotate(-45deg)}
 
-/* Centred M1 logo */
+/* Centred M1 logo — the coin's M1 mark (drawM1) reproduced as an inline SVG; single colour via currentColor */
 .nav-logo{
-  justify-self:center;font-family:var(--display);font-weight:900;font-size:1.4rem;
-  letter-spacing:.06em;text-transform:uppercase;font-stretch:82%;line-height:1;
-  color:#fff;transition:color .35s ease;
+  justify-self:center;display:inline-flex;align-items:center;
+  font-size:1.4rem;line-height:1;color:#fff;transition:color .35s ease;
 }
-.nav-logo .logo-1{color:var(--sky)}
+.nav-logo .m1-mark{ display:block; height:1.05em; width:auto; }
 .nav.scrolled .nav-logo{color:var(--ink)}
-.nav.scrolled .nav-logo .logo-1{color:var(--azure-deep)}
 body.menu-open .nav-logo{color:#fff}
-body.menu-open .nav-logo .logo-1{color:var(--sky)}
 
 /* CTA (right) */
 .nav-cta-wrap{justify-self:end;display:flex;align-items:center;gap:14px}
@@ -276,6 +273,9 @@ body.menu-open .nav-logo .logo-1{color:var(--sky)}
 .hero-spacer{height:100svh}
 .hero video,.hero .poster-fallback{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;
+  /* Slide-over depth: as content covers the fixed hero it pushes back into depth (slow zoom-in).
+     --coverP (0 in view → 1 fully covered) is set by JS; at 0 this is scale(1) = unchanged. */
+  transform:scale(calc(1 + .07 * var(--coverP,0)));transform-origin:50% 46%;will-change:transform;
 }
 .hero::after{
   content:"";position:absolute;inset:0;z-index:-1;
@@ -288,6 +288,9 @@ body.menu-open .nav-logo .logo-1{color:var(--sky)}
 .hero-content{
   display:flex;flex-direction:column;align-items:center;text-align:center;
   width:100%;padding:0 24px clamp(22px,4vh,52px);
+  /* drifts up + fades as the next section slides over it (parallax depth) */
+  transform:translateY(calc(-28px * var(--coverP,0)));opacity:calc(1 - .95 * var(--coverP,0));
+  will-change:transform,opacity;
 }
 .hero-place{
   font-family:var(--script);color:rgba(255,255,255,.95);
@@ -300,6 +303,7 @@ body.menu-open .nav-logo .logo-1{color:var(--sky)}
   position:absolute;top:50%;right:clamp(18px,4vw,60px);transform:translateY(-50%);
   width:clamp(96px,11vw,132px);aspect-ratio:1;z-index:2;
   display:grid;place-items:center;pointer-events:none;
+  opacity:calc(1 - 1.5 * var(--coverP,0));   /* the cue fades the moment you start scrolling */
 }
 .scroll-badge__ring{
   position:absolute;inset:0;width:100%;height:100%;transform-origin:50% 50%;
@@ -344,6 +348,43 @@ body.menu-open .nav-logo .logo-1{color:var(--sky)}
   position:fixed;inset:0;z-index:59;pointer-events:none;opacity:0;
   background:radial-gradient(34% 34% at 50% 50%,rgba(143,194,222,.22),transparent 62%);
   transition:opacity .3s ease;
+}
+
+/* ---------- INTRO LOADER (himon-style: coin water-fill on REAL progress → COLUMN-MASK reveal) ----------
+   The cream COLUMNS are the mask hiding the hero. During the fill they cover it; on reveal each column runs
+   DOWN (uncovering the hero top→bottom), staggered left→right — ONE motion. The coin sinks away (fade).
+   z while loading: #ldBg 8990 (FOUC guard, removed at reveal) < #ldGrid 9000 (cream column mask over the hero)
+   < #coin-canvas 9100 (live coin) < #ldUI 9300 (% counter). */
+html.is-loading{ overflow:hidden; }
+html.is-loading body{ overflow:hidden; }
+html:not(.is-loading) #ldBg,
+html:not(.is-loading) #ldGrid,
+html:not(.is-loading) #ldUI{ display:none !important; }        /* hidden when not loading / no-JS */
+html.is-loading #coin-canvas{ z-index:9100; }                  /* coin above the column mask */
+html.ld-revealing #coin-canvas{ opacity:0; transition:opacity .45s ease; }   /* coin sinks away as the hero is uncovered */
+
+#ldBg{ position:fixed; inset:0; z-index:8990; background:var(--paper); }   /* FOUC guard + under-mask (hidden when the wipe starts) */
+/* full-height COLUMNS (1 per column) = the cream mask over the hero; during the fill they cover it. */
+#ldGrid{
+  position:fixed; inset:0; z-index:9000; pointer-events:none;
+  display:grid; gap:0; grid-template-columns:repeat(var(--ld-cols,6),1fr);
+}
+.ld-col{ background:var(--paper); will-change:transform; }
+#ldGrid.wipe .ld-col{ transform:translateY(101%);
+  transition:transform 1.7s cubic-bezier(.22,1,.36,1); }   /* per-column delay set inline → left→right, EASE-OUT easeOutQuint (~80% of travel in the first ~0.5s, then a slow tail); uncovers the hero top→bottom */
+
+#ldUI{
+  position:fixed; left:0; right:0; bottom:clamp(28px,7vh,72px); z-index:9300; pointer-events:none;
+  display:flex; justify-content:center; align-items:flex-end; gap:3px;
+  font-family:var(--btn); color:var(--ink);
+}
+#ldUI .ld-unit{ font-size:.9rem; opacity:.55; margin-bottom:.4em; }
+#ldPct{ font-size:clamp(1.4rem,3vw,2rem); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+html.ld-revealing #ldUI{ opacity:0; transition:opacity .35s ease; }
+
+@media (prefers-reduced-motion: reduce){
+  html.is-loading{ overflow:auto; }
+  #ldBg,#ldGrid,#ldUI{ display:none !important; }
 }
 
 /* The MONACO1 hero wordmark — Libre Caslon Display, uppercase, oversized. */
@@ -425,6 +466,149 @@ section{position:relative}
 .numlist h3{margin-bottom:8px}
 .numlist p{color:var(--muted);font-size:1.02rem;line-height:1.42;max-width:48ch}
 
+/* ---- Tokenization → MATCHES the M1 TOKEN section (#monaco1): pearl + ink-dotted canvas + centred Caslon ---- */
+#tokenization{
+  position:relative; z-index:1; overflow:hidden; text-align:center;
+  background:var(--pearl); color:var(--ink);          /* same pearl + ink as .tr-panel / .token-show */
+}
+/* dotted "canvas" backdrop — identical recipe to the M1 section's .tr-dots (radial-masked ink dot grid) */
+#tokenization .tk-dots{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(circle, rgba(21,37,43,.16) 1.1px, transparent 1.7px);
+  background-size:24px 24px;
+  -webkit-mask-image:radial-gradient(ellipse 76% 70% at 50% 42%, #000 26%, transparent 80%);
+          mask-image:radial-gradient(ellipse 76% 70% at 50% 42%, #000 26%, transparent 80%);
+}
+#tokenization .tk-wrap{ position:relative; z-index:1; max-width:1040px; margin-inline:auto; }
+/* header — Caslon, centred, balanced (same family + treatment as .tr-statement) */
+#tokenization .tk-head{
+  font-family:var(--serif); font-weight:400; text-transform:none;
+  font-size:clamp(1.9rem,3.6vw,3rem); line-height:1.2; letter-spacing:-.01em;
+  color:var(--ink); max-width:20ch; margin:0 auto; text-wrap:balance;
+}
+#tokenization .tk-lead{
+  font-family:var(--body); color:var(--muted);
+  font-size:clamp(1.04rem,1.4vw,1.2rem); line-height:1.6; letter-spacing:-.005em;
+  max-width:58ch; margin:clamp(18px,2.6vh,28px) auto 0;
+}
+/* three facets — centred columns with big azure Caslon numerals (Caslon throughout, like M1) */
+#tokenization .tk-points{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(30px,4.5vw,68px);
+  max-width:1000px; margin:clamp(52px,8vh,104px) auto 0;
+}
+#tokenization .tk-point{ text-align:center; }
+#tokenization .tk-num{
+  display:block; font-family:var(--serif); font-weight:400; line-height:1; letter-spacing:.01em;
+  font-size:clamp(2.1rem,3.3vw,3.1rem); color:var(--azure-deep); margin-bottom:clamp(12px,1.8vh,18px);
+}
+#tokenization .tk-point h3{
+  font-family:var(--serif); font-weight:400; letter-spacing:-.01em; line-height:1.14;
+  font-size:clamp(1.3rem,1.7vw,1.6rem); color:var(--ink); margin:0 0 10px;
+}
+#tokenization .tk-point p{
+  font-family:var(--body); color:var(--muted); font-size:1rem; line-height:1.55;
+  max-width:34ch; margin-inline:auto;
+}
+@media(max-width:760px){
+  #tokenization .tk-points{ grid-template-columns:1fr; gap:42px; }
+}
+
+/* ---- #ai → DISTINCT editorial split (de-duped from #tokenization's centred dotted showcase).
+   LEFT-aligned: Caslon head + lead on the left · the 3 points as a hairline divider-list on the
+   right. NO dotted canvas, NO centred big numerals. Does NOT touch `.ai-sec` position/z/margin →
+   the peel→cover mechanism is untouched. ---- */
+#ai{ overflow:hidden; text-align:left; }
+#ai .ai2-grid{
+  display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(34px,5.5vw,88px);
+  align-items:start; max-width:1140px; margin-inline:auto;
+}
+#ai .ai2-h{
+  font-family:var(--serif); font-weight:400; letter-spacing:-.015em; line-height:1.08;
+  font-size:clamp(2rem,3.8vw,3.3rem); color:var(--ink); margin:0; max-width:13ch;
+}
+#ai .ai2-lead{
+  font-family:var(--body); color:var(--muted); max-width:44ch;
+  font-size:clamp(1.04rem,1.4vw,1.2rem); line-height:1.6; letter-spacing:-.005em;
+  margin:clamp(18px,2.6vh,28px) 0 0;
+}
+#ai .ai2-illus{
+  font-family:var(--body); font-style:italic; color:var(--muted);
+  font-size:.92rem; line-height:1.5; margin:clamp(22px,3vh,34px) 0 0; max-width:40ch;
+}
+/* the 3 points — refined hairline divider list (distinct from the centred big-numeral columns) */
+#ai .ai2-list{ display:flex; flex-direction:column; }
+#ai .ai2-item{
+  display:flex; gap:clamp(16px,1.4vw,24px); align-items:baseline;
+  padding:clamp(20px,2.6vh,30px) 0; border-top:1px solid var(--line);
+}
+#ai .ai2-item:last-child{ border-bottom:1px solid var(--line); }
+#ai .ai2-ix{
+  flex:none; min-width:1.7em; font-family:var(--serif); font-weight:400; line-height:1;
+  color:var(--azure-deep); font-size:clamp(1.4rem,1.8vw,1.7rem); letter-spacing:.01em;
+}
+#ai .ai2-item h3{
+  font-family:var(--serif); font-weight:400; letter-spacing:-.01em; line-height:1.16;
+  font-size:clamp(1.2rem,1.6vw,1.45rem); color:var(--ink); margin:0;
+}
+#ai .ai2-item p{
+  font-family:var(--body); color:var(--muted); font-size:.97rem; line-height:1.5; margin:5px 0 0;
+}
+@media(max-width:820px){
+  #ai .ai2-grid{ grid-template-columns:1fr; gap:30px; }
+  #ai .ai2-h{ max-width:18ch; }
+}
+
+/* ---- #tokenization → "Featured Work" STAGGERED SHOWCASE (melyn layout) · landing-page fonts (Caslon/DM Sans/Clash) ---- */
+#tokenization{ text-align:left; }                 /* override the leftover centred-showcase rule above */
+.wk-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:24px 40px; flex-wrap:wrap; }
+.wk-head-l{ max-width:20ch; }
+.wk-head .eyebrow{ margin-bottom:14px; }
+.wk-h{
+  font-family:var(--serif); font-weight:400; text-transform:none;
+  font-size:clamp(2rem,4.4vw,3.6rem); line-height:1.08; letter-spacing:-.015em;
+  color:var(--ink); margin:0; text-wrap:balance;
+}
+.wk-all{
+  font-family:var(--btn); font-weight:600; text-transform:uppercase; letter-spacing:.08em;
+  font-size:.82rem; color:var(--ink); text-decoration:none; white-space:nowrap; padding-bottom:6px;
+  transition:color .25s ease;
+}
+.wk-all:hover{ color:var(--azure-deep); }
+.wk-lead{
+  font-family:var(--body); color:var(--muted); max-width:56ch;
+  font-size:clamp(1.04rem,1.4vw,1.2rem); line-height:1.6; margin:clamp(20px,3vh,32px) 0 0;
+}
+/* staggered 2-col: card 02 (right) spans both rows & centres → offset from the 01/03 stack on the left */
+.wk-grid{
+  display:grid; grid-template-columns:1fr 1fr; column-gap:clamp(28px,4vw,64px); row-gap:clamp(40px,6vh,80px);
+  margin-top:clamp(48px,7vh,96px); align-items:start;
+}
+.wk-grid .wk-card:nth-child(1){ grid-column:1; grid-row:1; }
+.wk-grid .wk-card:nth-child(2){ grid-column:2; grid-row:1 / span 2; align-self:center; }
+.wk-grid .wk-card:nth-child(3){ grid-column:1; grid-row:2; }
+.wk-media{ border-radius:14px; overflow:hidden; background:var(--glass); aspect-ratio:4/5; }
+.wk-media img{ width:100%; height:100%; object-fit:cover; display:block; transition:transform .7s cubic-bezier(.2,.7,.2,1); }
+.wk-card:hover .wk-media img{ transform:scale(1.04); }
+.wk-meta{ margin-top:18px; }
+.wk-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.wk-title{
+  font-family:var(--serif); font-weight:400; letter-spacing:-.01em; line-height:1.1;
+  font-size:clamp(1.4rem,2vw,1.9rem); color:var(--ink); margin:0;
+}
+.wk-tags{ display:flex; gap:8px; flex-wrap:wrap; }
+.wk-tag{
+  font-family:var(--btn); font-weight:600; text-transform:uppercase; letter-spacing:.05em;
+  font-size:.66rem; color:var(--ink); padding:5px 10px; border-radius:7px; white-space:nowrap;
+}
+.wk-tag--a{ background:var(--glass); }            /* light azure */
+.wk-tag--b{ background:#ECE7DD; }                 /* soft sand */
+.wk-desc{ font-family:var(--body); color:var(--muted); font-size:1rem; line-height:1.5; margin:9px 0 0; max-width:44ch; }
+@media(max-width:760px){
+  .wk-grid{ grid-template-columns:1fr; }
+  .wk-grid .wk-card{ grid-column:1 !important; grid-row:auto !important; align-self:auto; }
+  .wk-head{ align-items:flex-start; }
+}
+
 /* 3-up gallery */
 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px}
 .three .figure{aspect-ratio:4/5}
@@ -439,7 +623,7 @@ section{position:relative}
    scroll is its PLAYHEAD: the section pins full-bleed, the title reveals, the video
    scrubs frame-by-frame, then the 3 cards fly up — then it releases to the next
    section. Timing DIALS live in initProjectScrub(). */
-#project{ --ps-scrim:0.40; --ps-h:100svh; }        /* scrim · --ps-h = stage fill height (100svh = full viewport) */
+#project{ --ps-scrim:0.40; --ps-h:100svh; --ps-spot:0.64; }  /* scrim · --ps-h = stage fill height · --ps-spot = readability halo behind the intro text */
 .project-scrub{ padding:0; }                       /* override .sec padding */
 /* HELD AUTO-PLAY: the section is a normal full-viewport block. It's held in place by a JS scroll-lock
    only while the reveal plays (see initProjectScrub), then released — so there's no sticky/pin and no
@@ -460,17 +644,32 @@ section{position:relative}
 }
 .ps-scrim{
   position:absolute; inset:0; z-index:1; pointer-events:none;
-  background:linear-gradient(180deg,
-    rgba(8,18,30,calc(var(--ps-scrim) + .10)) 0%,
-    rgba(8,18,30,calc(var(--ps-scrim) - .14)) 40%,
-    rgba(8,18,30,calc(var(--ps-scrim) + .06)) 100%);
+  background:
+    radial-gradient(140% 130% at 50% 32%, transparent 38%, rgba(4,10,18,.56) 100%),   /* stronger vignette: darken edges/corners so the cards separate from the same-tone bg */
+    linear-gradient(180deg,
+      rgba(8,18,30,calc(var(--ps-scrim) + .08)) 0%,
+      rgba(8,18,30,calc(var(--ps-scrim) - .12)) 34%,
+      rgba(8,18,30,calc(var(--ps-scrim) + .20)) 60%,
+      rgba(8,18,30,calc(var(--ps-scrim) + .48)) 100%);   /* dark foot behind/around the card row */
 }
 .ps-content{
   position:relative; z-index:2; height:100%;
   display:flex; flex-direction:column; justify-content:space-between;  /* intro to the top, cards to the bottom */
   padding-block:clamp(90px,11vh,144px) clamp(44px,6vh,76px);
 }
-.ps-intro{ max-width:min(720px,92vw); margin-inline:auto; text-align:center; }
+.ps-intro{ position:relative; isolation:isolate; max-width:min(720px,92vw); margin-inline:auto; text-align:center; }
+/* Spot gradient: a soft elliptical scrim ONLY behind the intro copy so it stays legible over the
+   developing photo (helps older / low-vision readers) without darkening the whole image. Dial: --ps-spot. */
+.ps-intro::before{
+  content:""; position:absolute; z-index:-1; pointer-events:none;
+  left:50%; top:48%; transform:translate(-50%,-50%);
+  width:132%; height:164%;
+  background:radial-gradient(ellipse at center,
+    rgba(8,16,26,var(--ps-spot,.64)) 0%,
+    rgba(8,16,26,calc(var(--ps-spot,.64) * .58)) 40%,
+    rgba(8,16,26,0) 74%);
+  filter:blur(8px);
+}
 .ps-title{
   font-family:var(--serif); color:#fff;
   font-size:clamp(2.1rem,5vw,4rem); line-height:1.06; letter-spacing:-.01em;
@@ -478,11 +677,23 @@ section{position:relative}
 }
 .ps-intro .chips{ margin-bottom:18px; justify-content:center; }
 .ps-intro .chip{ background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.34); color:#fff; }
-.ps-intro .lead{ color:rgba(255,255,255,.92); }
+.ps-intro .lead{ color:#fff; text-shadow:0 1px 16px rgba(0,0,0,.55); }   /* full white + soft shadow → legible over the photo */
+.ps-intro .ps-addr{
+  display:inline-flex; align-items:center; gap:8px; margin-top:22px;
+  font-family:var(--btn); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase;
+  color:rgba(255,255,255,.86); text-shadow:0 1px 12px rgba(0,0,0,.5);
+}
+.ps-intro .ps-addr svg{ width:13px; height:13px; opacity:.85; flex:none; }
 .ps-cards{ margin-top:0; flex:none; }
 /* Flexible card height so nothing (image bottom + caption) is clipped in the full-height
    stage — overrides .three's 4/5 aspect-ratio. Dial the clamp to taste. */
-.ps-cards .figure{ aspect-ratio:auto; height:clamp(190px, 30svh, 430px); }   /* taller base — fills the section, shrinks the gap */
+.ps-cards .figure{ aspect-ratio:auto; height:clamp(190px, 30svh, 430px);   /* taller base — fills the section, shrinks the gap */
+  /* Pop off the (now darker) bg with a crisp light edge-ring + a RESTRAINED depth shadow — not heavy. Scoped override of the global .figure shadow, project cards only. */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 0 0 1px rgba(255,255,255,.14),
+    0 18px 46px -30px rgba(0,0,0,.55);
+}
 .ps-cards .cap{ color:rgba(255,255,255,.82); justify-content:center; }
 .ps-cards .cap b{ color:#fff; }
 .project-after{ padding-block:clamp(64px,9vw,120px); }
@@ -497,11 +708,28 @@ section{position:relative}
   .ps-track{ height:auto; }
   .ps-stage{ position:relative; top:auto; height:auto; min-height:100svh; }
   .ps-content{ height:auto; gap:28px; }
+  .ai-sec{ margin-top:0; }                 /* no peel/pin under reduced motion → don't tuck #ai */
 }
 
 
+/* ---------- BREATHER (Côte d'Azur photo band between #monaco1 and #ai) ----------
+   Plain, robust: the photo is position:STICKY (z-index:1, BELOW #monaco1/#ai z-index:2). As you scroll,
+   the photo rises in, PINS (holds — the breather), then #ai (z:2) rises up over it. M1/#ai (z:2) cover the
+   photo at the edges. No fixed layer, no JS gate, no negative margins → always renders, layout stays attached.
+   Dial: --br-h = total scroll (rise + hold). */
+.breather{ position:relative; z-index:1; height:var(--br-h,180svh); }
+.breather-layer{ position:sticky; top:0; height:100svh; overflow:hidden; }
+.breather-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 58%; }
+/* soft scrim: a touch of depth top + bottom */
+.breather-scrim{ position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,16,26,.32) 0%, rgba(8,16,26,.08) 38%, rgba(8,16,26,.52) 100%); }
+@media(prefers-reduced-motion:reduce){
+  .breather{ height:auto; }
+  .breather-layer{ position:relative; height:min(72svh,560px); }
+}
+
 /* ---------- AI ---------- */
-.ai-sec{background:var(--pearl);border-block:1px solid var(--line)}
+.ai-sec{position:relative;z-index:3;margin-top:var(--ai-cover,-46svh);background:var(--pearl);border-block:1px solid var(--line)}  /* z:3 ABOVE #monaco1 (z:2) + small tuck → #ai rises over the still pinned photo to COVER it ("good cover" value). Larger detaches the next section — keep modest. */
 .ai-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(32px,5vw,68px);align-items:center}
 .ai-fig{aspect-ratio:4/3;border-radius:var(--r);overflow:hidden}
 .ai-fig img{width:100%;height:100%;object-fit:cover}
@@ -512,34 +740,48 @@ section{position:relative}
 .feature-row .f .ix{font-family:var(--display);color:var(--azure-deep);font-weight:700;font-size:.82rem;letter-spacing:.06em}
 @media(max-width:560px){ .feature-row{grid-template-columns:1fr;gap:20px} }
 
-/* ---------- TOKEN SHOWCASE (white bg · centred azure header · phrases exploding from behind a spinning coin) ---------- */
-.token-show{ background:var(--paper); color:var(--ink); overflow:hidden; text-align:center; padding-block:clamp(72px,10vw,140px); }
-.token-show .wrap{ position:relative; z-index:1; }
-.ts-head{ margin-bottom:clamp(6px,2vh,26px); }
-.ts-eyebrow{ justify-content:center; margin-bottom:16px; }
-.ts-title{ text-align:center; margin-inline:auto; max-width:18ch; }
-.ts-title.fill-head{ --fill-on:var(--azure-deep); }      /* header in the coin's azure */
-/* stage holds the centred coin + the radiating phrases */
-.ts-stage{ position:relative; width:100%; height:clamp(440px,66vh,700px); display:grid; place-items:center; }
-.ts-coin{ position:relative; z-index:1; width:clamp(200px,28vw,340px); aspect-ratio:1; display:grid; place-items:center; }
+/* ---------- TOKEN SHOWCASE (ordina-style: dotted "canvas" bg · centred coin ON TOP · scroll-fill statement UNDER) ---------- */
+.token-show{ position:relative; z-index:2; color:var(--ink); overflow:hidden; text-align:center; padding-block:0; }   /* bg moved to .tr-panel (which peels up). z:2 above the hero. kill .sec padding so .tr-wrap 100svh centres dead-centre */
+/* PEEL REVEAL layers: .tr-photo sits STILL behind; .tr-panel (pearl + content) slides UP to uncover it. */
+.tr-photo{ position:absolute; inset:0; z-index:0; overflow:hidden; }
+.tr-photo>img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 58%; }
+.tr-photo .tr-photo-scrim{ position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,16,26,.30) 0%, rgba(8,16,26,.06) 40%, rgba(8,16,26,.50) 100%); }
+.tr-panel{ position:relative; z-index:1; background:var(--pearl); will-change:transform; }
+/* dotted canvas backdrop — a radial mask fades the dots out toward the section edges */
+.tr-dots{
+  position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(circle, rgba(21,37,43,.16) 1.1px, transparent 1.7px);
+  background-size:24px 24px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 66% at 50% 46%, #000 24%, transparent 76%);
+          mask-image:radial-gradient(ellipse 70% 66% at 50% 46%, #000 24%, transparent 76%);
+}
+/* everything centred, stacked, holds a full viewport (the pin fills it) */
+.tr-wrap{
+  position:relative; z-index:1; min-height:100svh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(22px,4.5vh,52px); padding-block:clamp(72px,10vh,120px);
+}
+/* coin anchor — centred, ABOVE the statement (the WebGL coin docks here) */
+.ts-coin{ position:relative; z-index:1; width:clamp(190px,24vw,300px); aspect-ratio:1; display:grid; place-items:center; margin:0; }
 .ts-coin-fallback{
   font-family:var(--display); font-weight:900; letter-spacing:-.04em; font-size:clamp(2.6rem,6vw,4rem);
   background:radial-gradient(circle at 38% 32%, #eaf5fb, #3f86bf 55%, #0E2A47);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:var(--azure-deep);
 }
 html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders → hide the placeholder */
-/* short phrases — absolute, BEHIND the coin (coin canvas is z-60 fixed). Default = final spot, visible (no-JS). */
-.ts-word{
-  position:absolute; transform:translate(-50%,-50%); z-index:0; pointer-events:none; white-space:nowrap;
-  font-family:var(--display); font-weight:700; text-transform:uppercase;
-  font-size:clamp(.8rem,1.35vw,1.02rem); letter-spacing:.08em; color:var(--ink);
+/* the statement — words light up grey→ink word-by-word as you scroll the pin */
+.tr-statement{
+  --tr-dim:rgba(21,37,43,.17);
+  font-family:var(--serif); font-weight:400; text-transform:none;
+  font-size:clamp(1.5rem,3.4vw,2.85rem); line-height:1.34; letter-spacing:-.01em;
+  max-width:28ch; margin-inline:auto; color:var(--ink);
+  text-wrap:balance;   /* even out the lines so the last one isn't an orphan */
 }
-.ts-word.accent{ color:var(--azure-deep); }
-.ts-cta{ margin-top:clamp(18px,4vh,46px); }
-.ts-cta .illus{ color:var(--muted); }
+.tr-statement .rw{ color:inherit; }                       /* no-JS / reduced-motion → full ink */
 @media(max-width:680px){
-  .ts-word{ font-size:.72rem; letter-spacing:.05em; }
-  .ts-stage{ height:clamp(380px,72vh,560px); }
+  .tr-statement{ font-size:clamp(1.3rem,5.6vw,2rem); max-width:22ch; }
+  .ts-coin{ width:clamp(150px,42vw,210px); }
 }
 
 /* ---------- TOKEN (dark jewel-box) ---------- */
@@ -615,10 +857,11 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders �
 .mb-grad{
   position:absolute; inset:0; z-index:1; pointer-events:none;
   background:
-    linear-gradient(0deg, rgba(8,16,26,.86) 0%, rgba(8,16,26,.42) 26%, rgba(8,16,26,0) 56%),
-    linear-gradient(180deg, rgba(8,16,26,.30) 0%, rgba(8,16,26,0) 24%),
-    radial-gradient(48% 62% at 0% 50%, rgba(8,16,26,.48), transparent 68%),    /* left edge → cream "Full" stays legible over the bright sun */
-    radial-gradient(48% 62% at 100% 50%, rgba(8,16,26,.42), transparent 68%);  /* right edge → "Picture" over the sea/coast */
+    linear-gradient(0deg, rgba(8,16,26,.30), rgba(8,16,26,.30)),                /* DIAL: uniform dusk tint → moody anchor in the light run, separates from the bright gallery */
+    linear-gradient(0deg, rgba(8,16,26,.90) 0%, rgba(8,16,26,.48) 28%, rgba(8,16,26,0) 60%),
+    linear-gradient(180deg, rgba(8,16,26,.46) 0%, rgba(8,16,26,0) 30%),
+    radial-gradient(48% 62% at 0% 50%, rgba(8,16,26,.52), transparent 68%),     /* left edge → cream "Full" stays legible over the bright sun */
+    radial-gradient(48% 62% at 100% 50%, rgba(8,16,26,.48), transparent 68%);   /* right edge → "Picture" over the sea/coast */
 }
 /* big serif words — each absolutely placed at the CENTRE of its negative-space gap
    (between the section edge and the building), not pinned to the outer edge. */
@@ -638,8 +881,8 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders �
 .mb-foot{ position:relative; z-index:3; width:100%; text-align:center; padding:0 24px clamp(34px,6vh,68px); }
 .mb-desc{
   font-family:var(--btn,var(--display)); font-weight:400; color:rgba(255,255,255,.94);   /* Clash Grotesk */
-  font-size:clamp(1.4rem,2.9vw,2.25rem); line-height:1.34; letter-spacing:-.006em;
-  max-width:34ch; margin:0 auto clamp(18px,2.6vh,30px);
+  font-size:clamp(1rem,1.7vw,1.35rem); line-height:1.3; letter-spacing:-.006em;
+  max-width:46ch; text-wrap:balance; margin:0 auto clamp(18px,2.6vh,30px);
 }
 .mb-cta{
   display:inline-block;
@@ -657,54 +900,89 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders �
   .mb-word{ font-size:clamp(2.2rem,12vw,3.6rem); }
 }
 
-/* ---------- GALLERY (pinned centered DECK, front card exits in 3D) ---------- */
+/* ---------- GALLERY (Maravilla "Care in every detail": CSS STICKY card stack) ---------- */
 .gallery{
   background:linear-gradient(180deg,var(--pearl),var(--paper));
   border-block:1px solid var(--line);
   position:relative;
 }
-/* Track length is set inline from JS-side N (≈ N*100vh) so there's ample scrub.
-   The STAGE inside is what GSAP ScrollTrigger pins (pin:'.gallery-stage'). */
-.gallery-track{position:relative}
-.gallery-stage{
-  height:100svh;position:relative;display:grid;place-items:center;overflow:hidden;
-  perspective:1400px;perspective-origin:50% 42%;
-  background:var(--paper);
+.gallery-head{ padding-top:clamp(72px,9vw,120px); padding-bottom:clamp(26px,4vw,52px); }
+/* Each card is position:sticky and centred. As you scroll, the current card sticks while the NEXT
+   scrolls up from below and COVERS it (later DOM paints on top). Pure native scroll -> seamless
+   (no pin, no snap), one card at a time (no peek). --g-h = card height, --g-top = (100svh - --g-h)/2
+   keeps it centred, --g-gap = scroll distance between cards. */
+.gallery-stack{ position:relative; --g-h:84svh; --g-top:8svh; --g-gap:16svh; }  /* --g-gap small → next card starts rising almost as soon as the current settles (minimal "waiting") */
+.g-card{
+  position:sticky; top:var(--g-top);
+  width:min(1240px,86vw); height:var(--g-h); margin:0 auto var(--g-gap);
+  border-radius:18px; overflow:hidden; background:var(--ink);
+  box-shadow:0 50px 110px -46px rgba(8,22,40,.62), 0 14px 40px -18px rgba(8,22,40,.4);
+  backface-visibility:hidden; transform-origin:50% 50%; will-change:transform;
 }
-/* Each card is dead-centered via translate(-50%,-50%); JS appends further
-   transforms after that base. Front card starts SMALL (height ≈ FRONT_VH). */
-.g-img{
-  position:absolute;left:50%;top:50%;transform-origin:center;
-  height:42vh;aspect-ratio:3/4;
-  transform:translate(-50%,-50%);
-  border-radius:12px;overflow:hidden;
-  box-shadow:0 30px 70px -28px rgba(8,22,40,.55),0 6px 22px -10px rgba(8,22,40,.32);
-  background:var(--glass);
-  backface-visibility:hidden;
-  will-change:transform;
+.g-card>img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.g-card::after{                       /* legibility: dark bottom + faint top for the number */
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(8,14,22,.34) 0%, rgba(8,14,22,0) 24%),
+    linear-gradient(0deg, rgba(8,14,22,.80) 0%, rgba(8,14,22,.30) 30%, rgba(8,14,22,0) 56%);
 }
-.g-img img{width:100%;height:100%;object-fit:cover}
-/* Final centered statement (text — opacity-based is fine here) */
-.gallery-statement{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);
-  text-align:center;width:min(900px,92vw);pointer-events:none;
-  opacity:0;z-index:200;
+.g-num{
+  position:absolute; top:clamp(18px,2.4vw,40px); left:clamp(20px,2.6vw,46px); z-index:3;
+  font-family:var(--serif); font-weight:400; color:var(--pearl);
+  font-size:clamp(2.8rem,5.4vw,5rem); line-height:1; letter-spacing:.01em;
+  text-shadow:0 2px 26px rgba(0,0,0,.42);
 }
-.gallery-statement h2{
-  color:var(--ink);font-size:clamp(2.4rem,7vw,5.4rem);line-height:.92;
+.g-card-foot{
+  position:absolute; left:0; right:0; bottom:0; z-index:3;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:clamp(20px,4vw,64px);
+  padding:clamp(22px,3vw,46px);
+}
+.g-card-main{ display:flex; flex-direction:column; gap:clamp(12px,1.4vw,18px); }
+.g-card-title{
+  font-family:var(--serif); font-weight:400; color:#fff; margin:0;
+  font-size:clamp(1.9rem,3.4vw,3rem); line-height:1.0; letter-spacing:-.01em;
+  text-shadow:0 2px 22px rgba(0,0,0,.4);
+}
+.g-card-tags{ display:flex; flex-wrap:wrap; gap:10px; }
+.g-card-tags span{
+  font-family:var(--btn,var(--display)); font-size:.78rem; letter-spacing:.01em;
+  color:var(--azure-deep); background:rgba(255,255,255,.94);
+  padding:8px 16px; border-radius:999px; white-space:nowrap;
+}
+.g-card-desc{
+  flex:0 1 auto; max-width:34ch; margin:0; text-align:right;
+  font-family:var(--btn,var(--display)); font-weight:400; color:rgba(255,255,255,.92);
+  font-size:clamp(1rem,1.4vw,1.18rem); line-height:1.36; text-shadow:0 1px 14px rgba(0,0,0,.4);
+}
+/* final panel = a .g-card variant (paper bg, no image): scrolls up to cover card 04, then holds. */
+/* punchy climax: BRIGHT blue gradient card, WHITE headline + CTA */
+.g-final{ background:linear-gradient(160deg, #2E90E6 0%, #1C6FB0 52%, #1565AA 100%); box-shadow:none; display:grid; place-items:center; margin-bottom:24svh; }
+.g-final::after{ display:none; }
+.g-final-inner{ display:flex; flex-direction:column; align-items:center; gap:clamp(22px,3.4vh,40px); text-align:center; padding:clamp(24px,4vw,56px); }
+.g-final-inner h2{ color:#fff; font-family:var(--serif); font-size:clamp(2.4rem,7vw,5.4rem); line-height:.92; margin:0; text-shadow:0 2px 30px rgba(8,22,40,.45); }
+.g-final .pill{ color:#fff; border-color:rgba(255,255,255,.6); }
+.g-final .pill:hover{ background:#fff; color:var(--azure-deep); border-color:#fff; transform:translateY(-2px); }
+/* TABLET = squarer card; description drops below the title block */
+@media(max-width:1024px){
+  .gallery-stack{ --g-h:80svh; --g-top:10svh; }
+  .g-card{ width:min(700px,84vw); }
+  .g-card-foot{ flex-direction:column; align-items:flex-start; gap:clamp(16px,2.4vw,26px); }
+  .g-card-desc{ text-align:left; max-width:46ch; }
+}
+/* MOBILE = portrait card; order becomes tags -> title -> description */
+@media(max-width:620px){
+  .gallery-stack{ --g-h:76svh; --g-top:12svh; }
+  .g-card{ width:min(450px,90vw); }
+  .g-card-main{ flex-direction:column-reverse; }
+  .g-card-title{ font-size:clamp(1.7rem,8vw,2.3rem); }
+  .g-card-desc{ font-size:1rem; max-width:none; }
+}
+/* Reduced motion -> plain vertical stack (no sticky overlap). */
+@media(prefers-reduced-motion:reduce){
+  .g-card{ position:static; height:min(70svh,560px); margin:0 auto clamp(20px,3vw,40px); }
+  .g-final{ height:auto; min-height:clamp(280px,40svh,420px); margin-bottom:0; }
 }
 
-/* Static fallback grid (reduced motion / no GSAP) */
-.gallery-fallback{display:none;margin-top:48px}
-.gallery-fallback .grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
-}
-.gallery-fallback .grid .fb-tile{border-radius:14px;overflow:hidden;aspect-ratio:3/4;background:var(--glass)}
-.gallery-fallback .grid .fb-tile img{width:100%;height:100%;object-fit:cover}
-.gallery-fallback .statement{text-align:center;margin-top:56px}
-.gallery-fallback .statement h2{font-size:clamp(2.2rem,6vw,4.5rem)}
-@media(max-width:880px){ .gallery-fallback .grid{grid-template-columns:repeat(2,1fr)} }
-@media(max-width:480px){ .gallery-fallback .grid{grid-template-columns:1fr} }
 
 /* ---------- WAITLIST ---------- */
 /* Section sits on the warmer paper so the white-pearl card floats above it;
@@ -775,6 +1053,23 @@ form.wl .pill{justify-content:center;margin-top:4px}
 /* closer heading uses on-dark fill variant */
 .closer .lead{color:rgba(255,255,255,.86);margin:26px auto 36px;text-align:center}
 .closer .pill{margin-inline:auto}
+/* ---- Closer harmonised to the M1 white/black/blue minimalism (was a dark blue-hour photo). Style only — no animation change. ---- */
+.closer{ background:var(--pearl); }
+.closer .bg{ display:none; }                           /* drop the dark photo */
+.closer::after{ display:none; }                        /* drop the dark overlay */
+.closer::before{                                       /* M1 dotted "canvas" backdrop (radial-faded) */
+  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background-image:radial-gradient(circle, rgba(21,37,43,.16) 1.1px, transparent 1.7px);
+  background-size:24px 24px;
+  -webkit-mask-image:radial-gradient(ellipse 72% 70% at 50% 46%, #000 22%, transparent 78%);
+          mask-image:radial-gradient(ellipse 72% 70% at 50% 46%, #000 22%, transparent 78%);
+}
+.closer h2{ text-shadow:none; }
+.closer .fill-head{ --fill-on:var(--azure-deep); }     /* azure header, like the M1 section */
+.closer .lead{ color:var(--muted); }
+.closer .eyebrow{ color:var(--ink); }
+.closer .pill-light{ background:var(--azure-deep); color:#fff; border:1px solid var(--azure-deep); }
+.closer .pill-light:hover{ background:var(--azure); border-color:var(--azure); }
 
 .foot{position:relative;z-index:2;background:var(--sea);border-top:1px solid rgba(255,255,255,.14);padding-top:30px;overflow:hidden}
 .foot-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-bottom:30px}
@@ -788,8 +1083,8 @@ form.wl .pill{justify-content:center;margin-top:4px}
 .foot-track img{width:clamp(210px,23vw,340px);height:clamp(220px,27vw,400px);object-fit:cover;display:block;flex:none}
 @keyframes footscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 /* giant brand wordmark, baseline cropped a touch like the reference */
-.foot-brand{font-family:var(--serif);font-weight:700;text-transform:uppercase;letter-spacing:-.02em;
-  line-height:.82;color:var(--pearl);font-size:clamp(4.5rem,23vw,21rem);text-align:center;
+.foot-brand{font-family:var(--serif);font-weight:400;text-transform:uppercase;letter-spacing:-.02em;
+  line-height:.82;color:var(--pearl);font-size:clamp(4.2rem,17vw,15rem);text-align:center;
   white-space:nowrap;margin-top:18px;margin-bottom:-.08em;user-select:none;pointer-events:none}
 @media(max-width:620px){ .foot-top{flex-direction:column;align-items:flex-start;gap:12px} }
 @media(prefers-reduced-motion:reduce){ .foot-track{animation:none} }
@@ -841,6 +1136,125 @@ form.wl .pill{justify-content:center;margin-top:4px}
 <body>
 <a class="skip" href="#project">Skip to content</a>
 
+<!-- ===================== INTRO LOADER ===================== -->
+<!-- Set the flag + lock the page BEFORE the coin IIFE boots (it reads __M1_WANT_LOADER). -->
+<script>(function(){try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){window.__M1_WANT_LOADER=true;document.documentElement.classList.add('is-loading');}}catch(e){}})();</script>
+<div id="ldBg" aria-hidden="true"></div>
+<div id="ldGrid" aria-hidden="true"></div>
+<div id="ldUI" aria-hidden="true"><span id="ldPct">0</span><span class="ld-unit">%</span></div>
+<script>
+(function(){
+  if (!window.__M1_WANT_LOADER) return;
+  var html=document.documentElement, grid=document.getElementById('ldGrid'), pctEl=document.getElementById('ldPct');
+
+  /* ---- dials ---- */
+  var COLS=6;                  // full-height COLUMNS, 1 per column — set to himon's exact count
+  var COL_STEP=0.14;           // s stagger between columns (left→right)
+  var COL_MS=1700;             // per-column run-down duration (must match the CSS 1.7s transition)
+  var EASE=0.07;               // how fast the shown fill chases REAL progress
+  var MIN_MS=1200, MAX_MS=5200;// min on-screen time / safety cap (so the 54MB hero video never hangs it)
+
+  /* ---- build the columns (parked above; they run DOWN on reveal), left→right stagger ---- */
+  html.style.setProperty('--ld-cols',COLS);
+  var frag=document.createDocumentFragment();
+  for(var c=0;c<COLS;c++){ var col=document.createElement('span'); col.className='ld-col';
+    col.style.transitionDelay=(c*COL_STEP).toFixed(3)+'s'; frag.appendChild(col); }
+  grid.appendChild(frag);
+
+  /* ---- REAL progress: eager images + fonts, finishing on window.load (capped) ---- */
+  var total=1, done=0, target=0, t0=Date.now();
+  function bump(){ done++; target=Math.min(0.97, done/total); }
+  function setupProgress(){
+    var imgs=[].slice.call(document.images).filter(function(i){return i.getAttribute('loading')!=='lazy';});
+    total=imgs.length+1;  // +1 = fonts
+    imgs.forEach(function(img){ if(img.complete) bump(); else { img.addEventListener('load',bump); img.addEventListener('error',bump); } });
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bump); else bump();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setupProgress); else setupProgress();
+  window.addEventListener('load',function(){ target=1; });
+  setTimeout(function(){ target=1; }, MAX_MS);
+
+  /* ---- frame loop: ease the shown fill → target, drive the coin's IN-SHADER water fill, count % ---- */
+  var disp=0, finished=false;
+  function frame(){
+    if(finished) return;
+    requestAnimationFrame(frame);
+    disp+=(target-disp)*EASE;
+    if(target>=1 && disp>0.992) disp=1;
+    if(window.M1Coin && window.M1Coin.setFill) window.M1Coin.setFill(disp);
+    pctEl.textContent=Math.round(disp*100);
+    if(disp>=1 && Date.now()-t0>=MIN_MS){ finished=true; reveal(); }
+  }
+  requestAnimationFrame(frame);
+
+  /* ---- reveal: columns run DOWN to COVER the coin → clear coin + drop bg → columns run DOWN off-screen → hero ---- */
+  function reveal(){
+    if(window.M1Coin && window.M1Coin.setFill) window.M1Coin.setFill(1);
+    var bg=document.getElementById('ldBg'); if(bg) bg.style.display='none';   // drop the under-guard so the columns uncover the HERO (not cream)
+
+    /* ---- HAND-OFF (hidden behind the still-covering columns) ----
+       ScrollTrigger measured the page while `is-loading` forced overflow:hidden (maxScroll≈0),
+       so every pin (project autoplay · M1 290% pin · gallery sticky) is STALE. Restore scrolling
+       and refresh NOW — parked at the very top, with the columns still covering the viewport — so
+       the heavy refresh long-task + any position correction happen OFF-SCREEN and finish BEFORE
+       the user can scroll. That removes the ~half-second freeze, the first-scroll JUMP, and the
+       video stall that all landed on the reveal seam. Keep the `is-loading` class (so the coin
+       keeps its z-index + sink visual) and override overflow inline instead (inline beats the class). */
+    html.style.overflow='visible'; document.body.style.overflow='visible';
+    try{ if(window.lenis){ window.lenis.scrollTo(0,{immediate:true,force:true}); window.lenis.velocity=0; } else { window.scrollTo(0,0); } }catch(e){}
+    try{ if(window.ScrollTrigger) window.ScrollTrigger.refresh(); }catch(e){}
+
+    html.classList.add('ld-revealing');               // NOW fade the % + sink the coin away (after the freeze, so it animates smoothly)
+    grid.classList.add('wipe');                       // ONE motion: columns run DOWN, left→right → uncover the hero top→bottom
+    var stag=(COLS-1)*COL_STEP*1000;
+    setTimeout(function(){
+      html.classList.remove('is-loading'); html.classList.remove('ld-revealing');
+      html.style.overflow=''; document.body.style.overflow='';   // clear the inline scroll override
+      if(window.M1Coin && window.M1Coin.stopLoader) window.M1Coin.stopLoader();
+      if(grid.parentNode) grid.remove();
+      if(bg && bg.parentNode) bg.remove();
+      var ui=document.getElementById('ldUI'); if(ui) ui.remove();
+    }, COL_MS + stag + 160);
+  }
+})();
+</script>
+<!-- =================== END INTRO LOADER =================== -->
+
+<!-- ⚠️ TEMP FREEZE DIAGNOSTIC — remove once the stutter is pinned. Logs to the DevTools console:
+     long tasks (the freezes), key load events, every ScrollTrigger.refresh (+duration), and hero
+     video events. Reload with the console open and read what prints right when it stutters. -->
+<script>
+(function(){
+  var P = function(){ return Math.round(performance.now()); };
+  function log(tag,color,extra){ console.log('%c'+tag,'color:'+color+';font-weight:bold','@'+P()+'ms', extra||''); }
+  try{
+    new PerformanceObserver(function(list){
+      list.getEntries().forEach(function(e){
+        var who = (e.attribution&&e.attribution[0]) ? (e.attribution[0].name+'/'+e.attribution[0].containerType) : '';
+        console.log('%c[LONGTASK '+Math.round(e.duration)+'ms]','color:#fff;background:#c00;font-weight:bold','start@'+Math.round(e.startTime)+'ms', who);
+      });
+    }).observe({entryTypes:['longtask']});
+    log('[diag] longtask observer on','#888');
+  }catch(err){ console.log('[diag] no longtask support', err); }
+  ['DOMContentLoaded','load'].forEach(function(ev){ window.addEventListener(ev,function(){ log('[EVENT] '+ev,'#06c'); }); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ log('[fonts.ready]','#06c'); });
+  // hero <video> lifecycle
+  document.addEventListener('DOMContentLoaded',function(){
+    var v=document.querySelector('.hero video'); if(!v) return;
+    ['loadedmetadata','loadeddata','canplay','canplaythrough','playing','waiting','stalled','suspend','seeking','seeked'].forEach(function(ev){
+      v.addEventListener(ev,function(){ log('[video] '+ev,'#0a6','rs='+v.readyState); });
+    });
+  });
+  // wrap ScrollTrigger.refresh to time it
+  var tries=0;(function w(){ var ST=window.ScrollTrigger;
+    if(ST&&ST.refresh&&!ST.__diag){ ST.__diag=true; var o=ST.refresh.bind(ST);
+      ST.refresh=function(){ var s=performance.now(); var r=o.apply(this,arguments);
+        console.log('%c[ScrollTrigger.refresh '+Math.round(performance.now()-s)+'ms]','color:#fff;background:#c60;font-weight:bold','@'+P()+'ms'); return r; };
+      log('[diag] ScrollTrigger.refresh wrapped','#888');
+    } else if(tries++<900){ requestAnimationFrame(w); } })();
+})();
+</script>
+
 <!-- 3D coin: full-viewport fixed canvas (above section backgrounds, below the nav).
      Decorative — the wordmark already carries the accessible name "MONACO1". -->
 <div id="coin-glow" aria-hidden="true"></div>
@@ -856,7 +1270,21 @@ form.wl .pill{justify-content:center;margin-top:4px}
       <span class="burger-lines" aria-hidden="true"><i></i><i></i></span>
       <span class="burger-label">Menu</span>
     </button>
-    <a href="#top" class="nav-logo" aria-label="MONACO1 home">M<span class="logo-1">1</span></a>
+    <a href="#top" class="nav-logo" aria-label="MONACO1 home">
+      <!-- The coin's M1 mark (matches drawM1() in the coin IIFE): M = round-stroked monoline,
+           1 = bar + flag, with the forward F1 negative-space wedge cut via a mask. -->
+      <svg class="m1-mark" viewBox="-300 -228 640 456" fill="currentColor" aria-hidden="true" focusable="false">
+        <mask id="navM1Cut" maskUnits="userSpaceOnUse" x="-300" y="-228" width="640" height="456">
+          <rect x="-300" y="-228" width="640" height="456" fill="#fff"/>
+          <path transform="matrix(1,0,-0.17,1,0,0)" d="M150,180 L150,52 L236,-58 L236,180 Z" fill="#000"/>
+        </mask>
+        <g transform="matrix(1,0,-0.17,1,0,0)" mask="url(#navM1Cut)">
+          <path d="M-220,180 L-220,-180 L-38,60 L148,-180 L148,180" fill="none" stroke="currentColor" stroke-width="84" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M236,-180 L304,-180 L304,180 L236,180 Z"/>
+          <path d="M176,-104 L236,-180 L236,-92 L206,-66 Z"/>
+        </g>
+      </svg>
+    </a>
     <div class="nav-cta-wrap">
       <a href="#waitlist" class="pill pill-azure">Join the waitlist</a>
     </div>
@@ -879,7 +1307,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
 <!-- ===================== 1 · HERO ===================== -->
 <section class="hero" aria-label="Introduction">
   <video autoplay muted loop playsinline poster="assets/img/img-19.jpg" aria-hidden="true">
-    <source src="assets/video/hero.mp4" type="video/mp4" />
+    <source src="assets/video/hero-tower.mp4?v=tower2" type="video/mp4" />
   </video>
   <img class="poster-fallback" src="assets/img/img-19.jpg" alt="" aria-hidden="true" style="z-index:-3" />
   <!-- Bottom-centred group: place (tight) · wordmark. The "O" slot renders as a
@@ -927,6 +1355,10 @@ form.wl .pill{justify-content:center;margin-top:4px}
             <span class="chip">Exclusivity</span>
           </div>
           <p class="lead">Trump Tower Monaco rises in curved silhouette above the marina — a residence of rare scale and finish, conceived for those who measure a place by its light, its address and its outlook.</p>
+          <p class="ps-addr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.4-6.5-10A6.5 6.5 0 0 1 12 4.5 6.5 6.5 0 0 1 18.5 11c0 4.6-6.5 10-6.5 10Z"/><circle cx="12" cy="11" r="2.4"/></svg>
+            21 Bd du Larvotto · Larvotto seafront, Monaco
+          </p>
         </div>
 
         <!-- 3-up residences / amenities — fly up (opacity 0→1) as the closing beat -->
@@ -936,12 +1368,12 @@ form.wl .pill{justify-content:center;margin-top:4px}
             <figcaption class="cap"><b>Living</b> · sea-view interiors</figcaption>
           </figure>
           <figure class="figure-wrap">
-            <div class="figure"><img loading="lazy" src="assets/img/img-26.jpg" alt="Bedroom interior overlooking the harbor at sunset." /></div>
-            <figcaption class="cap"><b>Residences</b> · harbor outlook</figcaption>
+            <div class="figure"><img loading="lazy" src="assets/img/img-11.jpg" alt="A marble master bathroom with a freestanding tub framed by a floor-to-ceiling view of the Monaco marina at dusk." /></div>
+            <figcaption class="cap"><b>Interiors</b> · marble &amp; light</figcaption>
           </figure>
           <figure class="figure-wrap">
-            <div class="figure"><img loading="lazy" src="assets/img/img-22.jpg" alt="A swimmer in a glass infinity pool suspended over the Monaco harbor." /></div>
-            <figcaption class="cap"><b>Amenities</b> · infinity pool</figcaption>
+            <div class="figure"><img loading="lazy" src="assets/img/img-23.jpg" alt="A woman on a private curved terrace at golden hour, the Monaco harbor and yachts below." /></div>
+            <figcaption class="cap"><b>Terraces</b> · harbor outlook</figcaption>
           </figure>
         </div>
       </div>
@@ -951,112 +1383,117 @@ form.wl .pill{justify-content:center;margin-top:4px}
 </section>
 
 <!-- ===================== 3 · TOKENIZATION ===================== -->
-<section class="sec" id="tokenization" aria-labelledby="token-h" style="background:var(--pearl);border-block:1px solid var(--line)">
+<section class="sec" id="tokenization" aria-labelledby="token-h" style="background:var(--pearl)">
   <div class="wrap">
-    <div class="head-block reveal">
-            <h2 id="token-h" class="fill-head accent">A clearer way into premium real estate.</h2>
-    </div>
-    <div class="grid-asym reveal" style="align-items:start">
-      <div></div>
-      <div>
-        <p class="lead">MONACO1 (M1) represents a tokenized interest connected to a premium Monaco real-estate opportunity — designed to be transparent, considered and accessible.</p>
+    <!-- header row: eyebrow + Caslon head (left), bracketed link (right) — melyn featured-work layout, our fonts -->
+    <div class="wk-head reveal">
+      <div class="wk-head-l">
+        <span class="eyebrow"><span class="ring"></span>MONACO1 · How it works</span>
+        <h2 id="token-h" class="fill-head wk-h">A clearer way into premium real estate.</h2>
       </div>
+      <a class="wk-all" href="#monaco1">[ Explore the M1 token ]</a>
     </div>
+    <p class="wk-lead reveal">MONACO1 (M1) represents a tokenized interest connected to a premium Monaco real-estate opportunity — transparent, considered and accessible.</p>
 
-    <div class="grid-asym" style="margin-top:48px;align-items:center">
-      <ol class="numlist reveal" aria-label="How tokenization works">
-        <li>
-          <span class="num">01</span>
-          <div>
-            <h3>Access</h3>
-            <p>A low-friction way into premium Monaco real estate, opened to a wider circle of qualified investors.</p>
+    <!-- staggered 2-col showcase: card 02 (right) sits centred → offset from the 01/03 stack on the left -->
+    <div class="wk-grid">
+      <article class="wk-card reveal">
+        <div class="wk-media"><img src="assets/img/img-15.jpg" alt="Trump Tower Monaco rising above the Côte d'Azur." loading="lazy" /></div>
+        <div class="wk-meta">
+          <div class="wk-row">
+            <h3 class="wk-title">Access</h3>
+            <div class="wk-tags"><span class="wk-tag wk-tag--a">Open access</span><span class="wk-tag wk-tag--b">Qualified</span></div>
           </div>
-        </li>
-        <li>
-          <span class="num">02</span>
-          <div>
-            <h3>Structure</h3>
-            <p>A tokenized interest held within a regulated framework, with the structure and documentation set out clearly.</p>
+          <p class="wk-desc">A low-friction way into premium Monaco real estate, opened to a wider circle of qualified investors.</p>
+        </div>
+      </article>
+
+      <article class="wk-card reveal">
+        <div class="wk-media"><img src="assets/img/img-26.jpg" alt="A refined interior within Trump Tower Monaco." loading="lazy" /></div>
+        <div class="wk-meta">
+          <div class="wk-row">
+            <h3 class="wk-title">Structure</h3>
+            <div class="wk-tags"><span class="wk-tag wk-tag--a">Regulated</span><span class="wk-tag wk-tag--b">Documented</span></div>
           </div>
-        </li>
-        <li>
-          <span class="num">03</span>
-          <div>
-            <h3>Liquidity</h3>
-            <p>Built to extend as the platform grows — designed with future transferability in mind as the ecosystem matures.</p>
+          <p class="wk-desc">A tokenized interest held within a regulated framework, with the structure and documentation set out clearly.</p>
+        </div>
+      </article>
+
+      <article class="wk-card reveal">
+        <div class="wk-media"><img src="assets/img/img-22.jpg" alt="Water at the Côte d'Azur seafront — an image of liquidity." loading="lazy" /></div>
+        <div class="wk-meta">
+          <div class="wk-row">
+            <h3 class="wk-title">Liquidity</h3>
+            <div class="wk-tags"><span class="wk-tag wk-tag--a">Transferable</span><span class="wk-tag wk-tag--b">Future-ready</span></div>
           </div>
-        </li>
-      </ol>
-      <div class="figure reveal" style="aspect-ratio:4/5">
-        <img loading="lazy" src="assets/img/img-06.jpg" alt="A hand wearing a gold ring touching golden-lit water — an image of considered access." />
-      </div>
+          <p class="wk-desc">Built to extend as the platform grows — designed with future transferability in mind as the ecosystem matures.</p>
+        </div>
+      </article>
     </div>
   </div>
 </section>
 
 <!-- ===================== M1 TOKEN — after Tokenization (asset → access → vehicle) ===================== -->
 <section class="sec token-show" id="monaco1" aria-labelledby="m1-h">
-  <div class="wrap">
-    <header class="ts-head reveal">
-      <span class="eyebrow ts-eyebrow"><span class="ring"></span>MONACO1 · The M1 token</span>
-      <h2 id="m1-h" class="fill-head accent ts-title">MONACO1, in a single token.</h2>
-    </header>
-
-    <!-- Centre stage: the WebGL coin (docked to #m1CoinAnchor, slow Y-spin) renders OVER
-         this layer; the short token phrases explode outward from behind it. -->
-    <div class="ts-stage" id="tsStage">
-      <span class="ts-word"        style="left:19%;top:26%">Tokenized</span>
-      <span class="ts-word accent" style="left:80%;top:22%">Regulated</span>
-      <span class="ts-word"        style="left:13%;top:58%">Liquid by design</span>
-      <span class="ts-word accent" style="left:84%;top:62%">Monaco real estate</span>
-      <span class="ts-word"        style="left:31%;top:85%">Transparent</span>
-      <span class="ts-word accent" style="left:71%;top:87%">Institutional-grade</span>
-
+  <!-- PEEL REVEAL: while pinned, the words fill, THEN the .tr-panel (pearl bg + coin + statement) slides
+       UP to uncover this Côte d'Azur photo sitting still behind it (himon-style). Driven by initTokenReveal(). -->
+  <div class="tr-photo" aria-hidden="true">
+    <img src="assets/img/img-14.jpg" alt="" />
+    <div class="tr-photo-scrim"></div>
+  </div>
+  <div class="tr-panel">
+    <div class="tr-dots" aria-hidden="true"></div>
+    <div class="wrap tr-wrap">
+      <!-- the WebGL coin (slow turntable spin) docks to #m1CoinAnchor and renders OVER this box -->
       <div class="ts-coin" id="m1CoinAnchor" aria-hidden="true">
         <span class="ts-coin-fallback">M1</span>
       </div>
-    </div>
 
-    <div class="ts-cta reveal">
-      <a href="#waitlist" class="pill pill-azure">Request investor access
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </a>
-      <p class="illus" style="display:block;margin-top:16px">All token mechanics shown are illustrative.</p>
+      <!-- the statement fills word-by-word (grey→ink) on the pinned scrub, then the panel peels up (initTokenReveal) -->
+      <h2 id="m1-h" class="tr-statement">Trump Tower Monaco, made accessible — a tokenized interest in a landmark Côte d'Azur address, within a regulated framework.</h2>
     </div>
   </div>
 </section>
 
+<!-- (Breather band removed — the Côte d'Azur photo is now revealed by the #monaco1 PEEL, see initTokenReveal) -->
+
 <!-- ===================== 4 · AI & REAL ESTATE ===================== -->
 <section class="sec ai-sec" id="ai" aria-labelledby="ai-h">
   <div class="wrap">
-    <div class="ai-grid">
-      <div class="ai-fig figure reveal">
-        <img loading="lazy" src="assets/img/img-30.jpg" alt="A teal and black Formula 1 car on the Monaco circuit, suggesting precision and technology." />
+    <div class="ai2-grid">
+
+      <!-- LEFT: Caslon head + lead (scroll-fills grey→ink) -->
+      <div class="ai2-head reveal">
+        <h2 id="ai-h" class="fill-head ai2-h">Precision, applied to property.</h2>
+        <p class="ai2-lead">We pair premium real estate with modern, data-driven infrastructure — using AI-era tooling to inform diligence, structuring and reporting.</p>
+        <p class="ai2-illus">Tooling supports, but does not replace, professional diligence.</p>
       </div>
-      <div class="reveal">
-        <div class="head-block" style="margin-bottom:20px">
-                    <h2 id="ai-h" class="fill-head accent">Precision, applied to property.</h2>
-        </div>
-        <p class="lead">We pair premium real estate with modern, data-driven infrastructure — using AI-era tooling to inform diligence, structuring and reporting.</p>
-        <div class="feature-row" data-stagger>
-          <div class="f">
-            <span class="ix">i.</span>
+
+      <!-- RIGHT: the 3 points as a hairline divider-list (distinct from the centred columns) -->
+      <div class="ai2-list">
+        <div class="ai2-item reveal" style="transition-delay:0ms">
+          <span class="ai2-ix" aria-hidden="true">01</span>
+          <div class="ai2-body">
             <h3>Data-driven insights</h3>
             <p>Market and asset signals, organised to support clearer decisions.</p>
           </div>
-          <div class="f">
-            <span class="ix">ii.</span>
+        </div>
+        <div class="ai2-item reveal" style="transition-delay:90ms">
+          <span class="ai2-ix" aria-hidden="true">02</span>
+          <div class="ai2-body">
             <h3>Modern infrastructure</h3>
             <p>A platform built on contemporary, auditable rails.</p>
           </div>
-          <div class="f">
-            <span class="ix">iii.</span>
+        </div>
+        <div class="ai2-item reveal" style="transition-delay:180ms">
+          <span class="ai2-ix" aria-hidden="true">03</span>
+          <div class="ai2-body">
             <h3>Transparency</h3>
             <p>Reporting designed to keep investors informed.</p>
           </div>
         </div>
-        <p class="illus" style="margin-top:24px">Tooling supports, but does not replace, professional diligence.</p>
       </div>
+
     </div>
   </div>
 </section>
@@ -1066,8 +1503,8 @@ form.wl .pill{justify-content:center;margin-top:4px}
   <img class="mb-bg" src="assets/img/media-tower.jpg" alt="Trump Tower Monaco rising from the Mediterranean at golden hour, the marina and Côte d'Azur coast to one side." loading="lazy" />
   <div class="mb-grad" aria-hidden="true"></div>
 
-  <h2 id="media-h" class="mb-heading reveal" aria-label="Full Picture">
-    <span class="mb-word mb-left">Full</span>
+  <h2 id="media-h" class="mb-heading reveal" aria-label="A Full Picture">
+    <span class="mb-word mb-left">A Full</span>
     <span class="mb-word mb-right"><em>Picture</em></span>
   </h2>
 
@@ -1077,48 +1514,76 @@ form.wl .pill{justify-content:center;margin-top:4px}
   </div>
 </section>
 
-<!-- ===================== 6b · GALLERY (pinned stack-zoom) ===================== -->
+<!-- ===================== 6b · GALLERY (Maravilla-style stacked card flyout) ===================== -->
 <section class="gallery" id="gallery" aria-labelledby="gallery-h">
-  <!-- Header block (architectural, left-aligned) -->
-  <div class="wrap" style="padding-top:clamp(72px,9vw,120px)">
+  <!-- Heading sits above the pinned deck (Maravilla "Care in every detail"). -->
+  <div class="wrap gallery-head">
     <div class="head-block reveal wide">
             <h2 id="gallery-h" class="fill-head">A closer look at MONACO1.</h2>
     </div>
   </div>
 
-  <!-- Pinned scroll-scrubbed centered DECK. The .gallery-stage is what GSAP pins;
-       the .gallery-track gives the scroll length to scrub the deck through. -->
-  <div class="gallery-track" id="galleryTrack" aria-hidden="true">
-    <div class="gallery-stage" id="galleryStage">
-      <figure class="g-img"><img src="assets/img/img-15.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-08.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-22.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-16.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-01.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-24.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-26.jpg" alt="" /></figure>
-      <figure class="g-img"><img src="assets/img/img-07.jpg" alt="" /></figure>
-      <div class="gallery-statement" id="galleryStatement">
-        <h2 class="fill-head">Live the Riviera.</h2>
-      </div>
-    </div>
-  </div>
+  <!-- CSS STICKY card stack (Maravilla "Care in every detail"): each card sticks centred while the
+       NEXT scrolls up from below and COVERS it (later DOM paints on top). Pure native scroll -> seamless,
+       no pin, no snap, no peek. The final "Live the Riviera." panel is itself a card that covers card 04
+       and holds. Each card reflows by resolution (landscape -> square -> portrait). No JS. -->
+  <div class="gallery-stack" id="galleryStack">
 
-  <!-- Reduced-motion / no-GSAP static fallback (responsive rounded grid + static statement) -->
-  <div class="wrap gallery-fallback" id="galleryFallback">
-    <div class="grid" aria-label="Project visual archive">
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-15.jpg" alt="Close render of the curved Trump Tower Monaco beside the marina at sunset." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-08.jpg" alt="A black Bugatti parked outside the Monte-Carlo Casino at dusk." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-22.jpg" alt="A swimmer in a glass infinity pool suspended over the Monaco harbor." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-16.jpg" alt="A couple dining with a sea view at dusk." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-01.jpg" alt="A woman aboard a yacht in the Monaco harbor." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-24.jpg" alt="A poolside coconut beside a Trump Tower Monaco brochure on marble, yachts in the background." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-26.jpg" alt="Bedroom interior overlooking the harbor at sunset." /></div>
-      <div class="fb-tile"><img loading="lazy" src="assets/img/img-07.jpg" alt="A chef plating a dish in a luxury kitchen overlooking Monaco." /></div>
-    </div>
-    <div class="statement">
-      <h2 class="fill-head">Live the Riviera.</h2>
-    </div>
+    <article class="g-card">
+      <img src="assets/img/img-15.jpg" alt="The curved Trump Tower Monaco rising beside the marina at sunset." loading="lazy" />
+      <span class="g-num" aria-hidden="true">01</span>
+      <div class="g-card-foot">
+        <div class="g-card-main">
+          <h3 class="g-card-title">Waterfront Living</h3>
+          <div class="g-card-tags"><span>Sea Views</span><span>Architecture</span><span>Larvotto</span></div>
+        </div>
+        <p class="g-card-desc">Curved above the marina, each residence opens to the light and water of the Cote d'Azur.</p>
+      </div>
+    </article>
+
+    <article class="g-card">
+      <img src="assets/img/img-16.jpg" alt="A couple dining with a sea view at dusk." loading="lazy" />
+      <span class="g-num" aria-hidden="true">02</span>
+      <div class="g-card-foot">
+        <div class="g-card-main">
+          <h3 class="g-card-title">Private Dining</h3>
+          <div class="g-card-tags"><span>Fine Cuisine</span><span>Experience</span><span>Sea View</span></div>
+        </div>
+        <p class="g-card-desc">Intimate dinners with curated menus and a table set above the Mediterranean.</p>
+      </div>
+    </article>
+
+    <article class="g-card">
+      <img src="assets/img/img-22.jpg" alt="A swimmer in a glass infinity pool suspended over the Monaco harbor." loading="lazy" />
+      <span class="g-num" aria-hidden="true">03</span>
+      <div class="g-card-foot">
+        <div class="g-card-main">
+          <h3 class="g-card-title">Infinity Wellness</h3>
+          <div class="g-card-tags"><span>Infinity Pool</span><span>Spa</span><span>Skyline</span></div>
+        </div>
+        <p class="g-card-desc">Swim suspended over the harbour, where the water meets the horizon.</p>
+      </div>
+    </article>
+
+    <article class="g-card">
+      <img src="assets/img/img-08.jpg" alt="A black Bugatti parked outside the Monte-Carlo Casino at dusk." loading="lazy" />
+      <span class="g-num" aria-hidden="true">04</span>
+      <div class="g-card-foot">
+        <div class="g-card-main">
+          <h3 class="g-card-title">Private Transfers</h3>
+          <div class="g-card-tags"><span>Chauffeur</span><span>Concierge</span><span>Comfort</span></div>
+        </div>
+        <p class="g-card-desc">Effortless arrivals and departures, arranged around your schedule.</p>
+      </div>
+    </article>
+
+    <article class="g-card g-final" id="galleryFinal">
+      <div class="g-final-inner">
+        <h2>Live the Riviera.</h2>
+        <a class="pill" href="assets/doc/brochure.pdf" target="_blank" rel="noopener">See the full collection</a>
+      </div>
+    </article>
+
   </div>
 </section>
 
@@ -1384,259 +1849,57 @@ form.wl .pill{justify-content:center;margin-top:4px}
   }
 
   /* ===========================================================
-     GALLERY — centered DECK (stack) that advances; front card exits in 3D.
-     The deck is a stack of cards, all dead-centered. The page pins on the
-     stage and scroll DRIVES the deck: the front card grows, slants on Y, and
-     slides out of the frame (it LEAVES, never fades); the next card advances
-     forward and the whole deck eases up. After the last card exits, a centered
-     statement line fades+scales in. (Reference: artez.framer.website.)
-
-     ---- Deck math (per card i, with head = progress * N, depth d = i - head) ----
-     d >= 0 (still in the deck, behind/at front):
-       scale      = 1 - d*DECK_SCALE_STEP            (back cards smaller)
-       translateY = -d*DECK_OFFSET_VH  (vh)          (deck stacks UPWARD)
-       rotateX    = 5deg                             (stack tilt)
-       rotateY    = (1 - min(d,1)) * 8deg            (deck "follows" the leader)
-       opacity    = d>3 ? clamp(1-(d-3),0,1) : 1     (~VISIBLE_CARDS visible)
-       z-index    = 100 - i
-     d < 0 (this card is the leader and is EXITING), e = -d (0 → 1+):
-       scale      = 1 + e*EXIT_SCALE                 (grows toward viewer)
-       rotateY    = e*EXIT_RY_DEG                    ("coming toward you" slant)
-       rotateX    = e*8deg
-       translateY = -e*EXIT_TY_VH (vh)               (moves out of frame, up)
-       translateZ = e*420px                          (toward camera)
-       opacity    = 1                                (must LEAVE, never fade)
-       z-index    = high (front)
-     transform = translate(-50%,-50%) translateY(ty) translateZ(tz)
-                  rotateX(rx) rotateY(ry) scale(s)
+     GALLERY — Maravilla "Care in every detail": pure CSS STICKY card stack.
+     No JS needed: each .g-card is position:sticky and centred, so as you scroll
+     the NEXT card scrolls up from below and COVERS the current one (later DOM
+     paints on top). Native scroll -> seamless (no pin, no snap), one card at a
+     time (no peek, no visible stack). The final "Live the Riviera." panel is
+     itself a sticky card that covers card 04 and holds. See the GALLERY CSS
+     block. Reduced-motion -> a plain vertical stack (a media query, still no JS).
      =========================================================== */
-
-  // ---- Tuning constants (exposed for easy adjustment) ----
-  const FRONT_VH        = 42;   // front card height in vh (set in CSS too)
-  const DECK_OFFSET_VH  = 7;    // each deeper card sits this many vh higher
-  const DECK_SCALE_STEP = 0.08; // each deeper card is this much smaller
-  const EXIT_SCALE      = 1.6;  // how much the exiting card grows (1 + e*this)
-  const EXIT_RY_DEG     = 32;   // Y-axis slant of the exiting card (deg)
-  const EXIT_TY_VH      = 95;   // how far the exiting card travels DOWN & out (vh)
-  const VISIBLE_CARDS   = 4;    // how many cards peek in the deck
-  const EXIT_TZ_PX      = 420;  // exiting card pulled toward the camera (px)
-  const STACK_RX_DEG    = 5;    // stack tilt for cards in the deck (deg)
-  const FOLLOW_RY_DEG   = 8;    // how much the deck "follows" the leader (deg)
-  const EXIT_RX_DEG     = 8;    // exiting card forward tilt (deg)
-
   function initGallery(){
-    const track = document.getElementById('galleryTrack');
-    const stage = document.getElementById('galleryStage');
-    const statement = document.getElementById('galleryStatement');
-    const fallback = document.getElementById('galleryFallback');
+    // The cards are position:sticky (CSS) so the NEXT card rises up from below and covers the
+    // current one on NATIVE scroll (seamless — no pin, no snap). This adds the only thing CSS
+    // can't: as the next card rises to cover it, the CURRENT card PULLS BACK — lifts up + tilts
+    // off the top (Maravilla). Pure transform on scroll, so it stays seamless. No-op under reduced motion.
+    const stack = document.getElementById('galleryStack');
+    const cards = stack ? Array.from(stack.querySelectorAll('.g-card')) : [];
+    if (!stack || cards.length < 2 || reduce) return;
 
-    const imgs = stage ? Array.from(stage.querySelectorAll('.g-img')) : [];
-    const N = imgs.length;
+    // ---- Dials ----
+    const BACK = 760;   // px the outgoing card recedes on the Z-axis (smaller / further away) -- the "scale" of the pull-back
+    const ROT  = 8;     // deg in-plane TILT of the receding card (exaggerated, Maravilla-style); direction ALTERNATES odd/even
 
-    // Reduced motion or no GSAP → static rounded grid + static statement.
-    if (reduce || !hasGSAP || N === 0) {
-      if (track) track.style.display = 'none';
-      if (fallback) fallback.style.display = 'block';
-      return;
-    }
-
-    // Track length ≈ N*100% so there's ample scrub, plus a trailing beat for
-    // the statement. End is computed off the track top.
-    const END = (N * 75) + '%';
-
-    // Compose the full transform string for a card at depth d (= i - head).
-    function cardTransform(d){
-      if (d >= 0){
-        // In the deck (behind / at front). d=0 is the current front card.
-        // RESTING CARDS LIE FLAT & DEAD-CENTRED — zero tilt. All rotation is
-        // reserved for the exit branch below (which starts from 0°), so the front
-        // card sits perfectly square while it waits for scroll and the lean only
-        // appears once it actually begins to fly out. This also removes the old
-        // tilt "snap" at the moment of exit, making the hand-off seamless.
-        const s  = 1 - d * DECK_SCALE_STEP;
-        const ty = -d * DECK_OFFSET_VH;                 // vh, stacks upward
-        const op = d > (VISIBLE_CARDS - 1)
-          ? Math.min(Math.max(1 - (d - (VISIBLE_CARDS - 1)), 0), 1)
-          : 1;
-        return {
-          transform: 'translate(-50%,-50%) translateY(' + ty + 'vh) translateZ(0px) rotateX(0deg) rotateY(0deg) scale(' + s + ')',
-          opacity: op
-        };
-      } else {
-        // Leader EXITING. e runs 0 → 1+ as it leaves the frame.
-        const e  = -d;
-        // FRONT-LOAD THE TILT so the lean is clearly visible WHILE the card is
-        // still near centre — instead of only ramping up after it has flown off.
-        // tiltE is an ease-out of e, so the rotation LEADS the translate: the card
-        // pivots into its lean the instant it leaves the resting position, then
-        // glides out tilted. This matches the look you liked on the return (which
-        // is simply this same motion played in reverse).
-        const eC = Math.min(e, 1);
-        const tiltE = 1 - Math.pow(1 - eC, 2);
-        const s  = 1 + e * EXIT_SCALE;
-        const ty = e * EXIT_TY_VH;                      // vh, DOWN & out (with page flow, like Artez)
-        const tz = e * EXIT_TZ_PX;                       // toward camera
-        const rx = -tiltE * EXIT_RX_DEG;                 // forward tilt — now leads the exit
-        const ry =  tiltE * EXIT_RY_DEG;                 // side lean — now leads the exit
-        return {
-          transform: 'translate(-50%,-50%) translateY(' + ty + 'vh) translateZ(' + tz + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale(' + s + ')',
-          opacity: 1                                     // never fades; it leaves
-        };
+    let gTopPx = 0, ticking = false;
+    const measure = () => {
+      const v = parseFloat(getComputedStyle(stack).getPropertyValue('--g-top')) || 8;  // svh
+      gTopPx = window.innerHeight * v / 100;
+    };
+    const update = () => {
+      ticking = false;
+      const vh = window.innerHeight;
+      const denom = (vh - gTopPx) || vh;
+      // read positions first (the card we read for each is the NEXT/front card, which is never lifted)
+      const tops = cards.map((c) => c.getBoundingClientRect().top);
+      const last = cards.length - 1;
+      for (let i = 0; i < last; i++) {
+        // exit = how far the next card has risen to cover card i (0 = next still below, 1 = next centred over it)
+        let e = (vh - tops[i + 1]) / denom;
+        e = e < 0 ? 0 : e > 1 ? 1 : e;
+        if (e <= 0) { cards[i].style.transform = ''; continue; }
+        // recede straight back on Z (dead-centred, no fly-up) + an exaggerated in-plane TILT whose
+        // direction ALTERNATES by odd/even card (Maravilla). The next card slides up over it via sticky.
+        const k = Math.pow(e, 0.8);             // ease so the recede + tilt read EARLY, not just at the end
+        const dir = (i % 2 === 0) ? -1 : 1;     // alternate the spin direction per card (odd vs even)
+        cards[i].style.transform =
+          'perspective(1500px) rotate(' + (dir * ROT * k).toFixed(2) + 'deg) translateZ(' + (-k * BACK).toFixed(1) + 'px)';
       }
-    }
-
-    function applyZ(img, i, d){
-      // Exiting cards (d<0) ride above the deck; deck cards layer 100 - i.
-      img.style.zIndex = d < 0 ? (300 - i) : (100 - i);
-    }
-
-    // Paint the deck for a given scroll progress (0..1).
-    function renderDeck(p){
-      const head = p * N; // 0 → N (playhead through the deck)
-      imgs.forEach((img, i) => {
-        const d = i - head;
-        const { transform, opacity } = cardTransform(d);
-        img.style.transform = transform;
-        img.style.opacity = opacity;
-        applyZ(img, i, d);
-      });
-
-      // Statement: fade+scale in over the last slot, once the final card exits.
-      const stT = gsap.utils.clamp(0, 1, (head - (N - 0.6)) / 0.6);
-      statement.style.opacity = stT;
-      statement.style.transform = 'translate(-50%,-50%) scale(' + (0.92 + stT * 0.08) + ')';
-    }
-
-    // Initial deck state.
-    renderDeck(0);
-
-    // ── WHEEL-CAPTURE STEPPER (carve-out 1) ───────────────────────────────
-    // The stack/fly-out math (renderDeck) is UNCHANGED. Instead of scrubbing the
-    // deck against scroll DISTANCE, we PIN the stage and take over input: while
-    // the deck owns the viewport the page is locked, and each discrete gesture
-    // (one wheel notch, one swipe, or an arrow key) plays exactly one card's exit
-    // and settles on the next image. N cards + the closing statement → N+1 states
-    // (index 0…N). Stepping past either end RELEASES the lock and lets the page
-    // scroll on, so you can never get trapped. Zero scroll-distance fatigue.
-
-    const LAST = N;                 // index N == the "Live the Riviera." statement
-    let index = 0;                  // current settled state 0…N
-    let progress = 0;               // 0…1 fed to renderDeck (== index/N at rest)
-    let engaged = false;            // is the deck holding the page right now?
-    let animating = false;          // a step tween is in flight
-    let cooldownUntil = 0;          // briefly ignore input after each step (eats momentum)
-    const nowMs = () => (window.performance ? performance.now() : Date.now());
-    const docEl = document.documentElement;
-
-    // Scroll lock / unlock / "scroll past" — works WITH or WITHOUT Lenis.
-    function lockScroll(){
-      if (lenis) lenis.stop();
-      else { docEl.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; }
-    }
-    function unlockScroll(){
-      if (lenis) lenis.start();
-      else { docEl.style.overflow = ''; document.body.style.overflow = ''; }
-    }
-    function scrollPast(dir){
-      const y = dir > 0 ? (st.end + 2) : Math.max(0, st.start - 2);
-      if (lenis) lenis.scrollTo(y, { duration: 0.5, force: true });
-      else window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-
-    function settle(i){ index = i; progress = i / N; renderDeck(progress); }
-    // Per-step transition speed/feel. Longer + gentler than before so the exit
-    // glides instead of snapping. power2.inOut = soft ease-in AND ease-out.
-    const STEP_DURATION  = 1.05;    // seconds per card transition (raise = slower, more graceful)
-    const FINAL_DURATION = 0.6;     // faster reveal for the closing "Live the Riviera." statement
-    const STEP_EASE      = 'power2.inOut';
-    function tweenTo(i){
-      animating = true;
-      const from = { v: progress };
-      gsap.to(from, {
-        v: i / N, duration: (i === LAST ? FINAL_DURATION : STEP_DURATION), ease: STEP_EASE,
-        onUpdate(){ progress = from.v; renderDeck(progress); },
-        onComplete(){
-          index = i; progress = i / N; animating = false; cooldownUntil = nowMs() + 220;
-          // Landed on the closing statement → drop the lock NOW (Step 1) so a single
-          // ordinary scroll continues to the next section, with no extra captured step.
-          if (i === LAST) armExit();
-        }
-      });
-    }
-    function step(dir){
-      if (animating || nowMs() < cooldownUntil) return;
-      const next = index + dir;
-      if (next < 0)    { disengage(-1); return; }   // up, off the first card
-      if (next > LAST) { disengage(1);  return; }   // down, off the statement
-      tweenTo(next);
-    }
-    function engage(atIndex){
-      if (engaged) return;
-      engaged = true;
-      lockScroll();
-      settle(atIndex);
-    }
-    function disengage(dir){
-      if (!engaged) return;
-      engaged = false;
-      unlockScroll();
-      scrollPast(dir);
-    }
-    // Reached the final statement: turn the snap OFF at once and park the scroll at
-    // the very end of the pinned range. The stage is fixed across the whole range,
-    // so this reposition is INVISIBLE (the statement doesn't move) — but it means one
-    // ordinary scroll now unpins straight to the next section, with no second captured
-    // step. The statement stays on screen until you choose to scroll on. (Step 1.)
-    function armExit(){
-      engaged = false;
-      unlockScroll();
-      const y = Math.max(st.start, st.end - 2);
-      if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
-      else window.scrollTo(0, y);
-    }
-
-    // Pin holds the stage centred; its callbacks tell us when the deck owns the
-    // viewport (entering downward → start at card 0; entering upward from below →
-    // start at the statement). Short pin distance — we never scrub through it.
-    const st = ScrollTrigger.create({
-      trigger: track,
-      start: 'top top',
-      end: '+=100%',
-      pin: stage,
-      pinSpacing: true,
-      onEnter: () => engage(0),
-      onEnterBack: () => engage(LAST),
-      onRefresh: () => renderDeck(progress)
-    });
-
-    // Inputs only act while engaged; otherwise the page scrolls normally. Each
-    // gesture = one step; momentum is absorbed by the animating/cooldown guard.
-    window.addEventListener('wheel', (e) => {
-      if (!engaged) return;
-      e.preventDefault();
-      const dir = e.deltaY > 0 ? 1 : (e.deltaY < 0 ? -1 : 0);
-      if (dir && Math.abs(e.deltaY) > 2) step(dir);
-    }, { passive: false });
-
-    let touchY = null;
-    window.addEventListener('touchstart', (e) => {
-      if (!engaged) return;
-      touchY = e.touches[0].clientY;
-    }, { passive: false });
-    window.addEventListener('touchmove', (e) => {
-      if (!engaged) return;
-      e.preventDefault();
-      if (touchY == null) return;
-      const dy = touchY - e.touches[0].clientY;   // swipe up (dy>0) advances
-      if (Math.abs(dy) > 36) { step(dy > 0 ? 1 : -1); touchY = null; }
-    }, { passive: false });
-    window.addEventListener('touchend', () => { touchY = null; }, { passive: true });
-
-    window.addEventListener('keydown', (e) => {
-      if (!engaged) return;
-      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); step(1); }
-      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
-    });
+      cards[last].style.transform = '';          // the final card never lifts (it's the resting card)
+    };
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+    measure(); update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => { measure(); update(); }, { passive: true });
   }
 
   // PROJECT · full-bleed scroll-scrubbed reveal.
@@ -1721,8 +1984,9 @@ form.wl .pill{justify-content:center;margin-top:4px}
     const DEV_AT     = 0.5;             // how far the bg develops under SCROLL before the synced finish (0.5 = half real / half sketch)
     const TRIGGER    = 0.92;            // track-scroll progress that fires the synced finish (near the end → tiny dead zone after)
 
-    // Title hidden start — set ONLY on this scrub path (fallback leaves it visible).
-    gsap.set(intro, { autoAlpha: 0, y: 24 });
+    // Intro text is ALWAYS visible (studio-lead) — no hidden start. Only the BACKGROUND
+    // develops on scroll; the headline/copy show immediately so the section isn't bland.
+    gsap.set(intro, { autoAlpha: 1, y: 0 });
     if (trio){
       // centre card oversized + on top, revealed first; sides hidden, stacked behind it
       gsap.set(cardEls, { autoAlpha: 0 });
@@ -1782,33 +2046,60 @@ form.wl .pill{justify-content:center;margin-top:4px}
     let played = false;
     ScrollTrigger.create({
       trigger: stage, start: 'top top', once: true,
-      onEnter: () => { if (played) return; played = true; lockScroll(); master.play(); }
+      onEnter: (self) => {
+        if (played) return; played = true;
+        lockScroll();
+        // Snap to exactly the section top so the stage fills the viewport (kills the white strip
+        // from Lenis momentum overshooting 'top top'). Immediate snap at LOCK ≠ animated release.
+        if (lenis) lenis.scrollTo(self.start, { immediate: true, force: true });
+        else window.scrollTo(0, self.start);
+        master.play();
+      }
     });
 
     ScrollTrigger.refresh();
   }
 
-  // TOKEN SHOWCASE — short phrases explode outward from behind the coin (centre →
-  // their natural spots), fading 0→1 as they arrive, once the section scrolls in.
-  // No-JS / reduced-motion: CSS leaves every phrase at its final spot, fully visible.
-  function initTokenShowcase(){
-    const stage = document.getElementById('tsStage');
-    if (!stage) return;
-    const words = Array.from(stage.querySelectorAll('.ts-word'));
-    if (!words.length || reduce || !hasGSAP) return;
+  // TOKEN REVEAL (ordina-style) — the statement is split into word spans; the section
+  // PINS full-screen and the words light up grey→ink one after another as you scroll
+  // through the pin. The coin sits centred above, slow-spinning the whole time.
+  // No-JS / reduced-motion: CSS leaves every word at full ink (--ink), no pin.
+  const TR_DIM = 'rgba(21,37,43,0.17)';   // dial — resting (un-filled) word colour
+  const TR_INK = '#15252B';               // dial — filled word colour (= --ink)
+  const TR_STEP = 0.6;                     // dial — scroll-stagger between word fills
+  const TR_FILL = 1.0;                     // dial — how long each word takes to fill
+  const TR_PIN  = '290%';                  // dial — pin length (words fill + panel peel + hold)
+  const PEEL_DUR  = 6;                      // dial — how long the panel takes to peel up (timeline units)
+  const PEEL_GAP  = 1.2;                    // dial — pause after the words finish before the peel starts
+  const PEEL_HOLD = 3;                      // dial — hold the revealed photo before AI rises to cover
+  function initTokenReveal(){
+    const stmt = document.getElementById('m1-h');
+    if (!stmt) return;
+    // Split the statement into individual word spans (keep the spaces as text nodes).
+    const tokens = stmt.textContent.trim().split(/\s+/);
+    stmt.textContent = '';
+    const frag = document.createDocumentFragment();
+    tokens.forEach((w, i) => {
+      const s = document.createElement('span'); s.className = 'rw'; s.textContent = w;
+      frag.appendChild(s);
+      if (i < tokens.length - 1) frag.appendChild(document.createTextNode(' '));
+    });
+    stmt.appendChild(frag);
+    const words = Array.from(stmt.querySelectorAll('.rw'));
+    if (!words.length || reduce || !hasGSAP) return;       // reduced-motion → stays full ink, no pin
 
-    // Start each phrase stacked at the stage centre (behind the coin), invisible.
-    const sr = stage.getBoundingClientRect();
-    const cx = sr.left + sr.width / 2, cy = sr.top + sr.height / 2;
-    words.forEach(w => {
-      const r = w.getBoundingClientRect();
-      gsap.set(w, { x: cx - (r.left + r.width / 2), y: cy - (r.top + r.height / 2), opacity: 0, scale: 0.45 });
+    gsap.set(words, { color: TR_DIM });
+    const panel = document.querySelector('#monaco1 .tr-panel');
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: '#monaco1', start: 'top top', end: '+=' + TR_PIN, pin: true, scrub: 0.5 }
     });
-    // Explode outward to natural positions, fading in as they land.
-    gsap.to(words, {
-      x: 0, y: 0, opacity: 1, scale: 1, ease: 'power3.out', duration: 1.1, stagger: 0.07,
-      scrollTrigger: { trigger: '#monaco1', start: 'top 62%', once: true }
-    });
+    words.forEach((w, i) => tl.to(w, { color: TR_INK, duration: TR_FILL, ease: 'none' }, i * TR_STEP));
+    // PEEL: once the words finish filling, the panel (pearl + coin + words) slides UP to uncover the still photo, then holds.
+    if (panel) {
+      const fillEnd = (words.length - 1) * TR_STEP + TR_FILL;
+      tl.to(panel, { yPercent: -105, ease: 'power2.inOut', duration: PEEL_DUR }, fillEnd + PEEL_GAP);
+      tl.to({}, { duration: PEEL_HOLD });
+    }
   }
 
   // Kick off effects. The heading splitter ALWAYS runs (reduced-motion/no-GSAP
@@ -1818,11 +2109,18 @@ form.wl .pill{justify-content:center;margin-top:4px}
     initGallery();
     initHeadingFill();
     initProjectScrub();
-    initTokenShowcase();
-    // Recompute once images/fonts have loaded (pin distances depend on layout).
-    window.addEventListener('load', () => ScrollTrigger.refresh());
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => ScrollTrigger.refresh());
+    initTokenReveal();
+    // THE FREEZE: GSAP auto-refreshes ScrollTrigger on `load`/`DOMContentLoaded` by default. The
+    // heavy hero video delays `window.load` until ~1s AFTER the loader (capped by MAX_MS) has
+    // already revealed the hero, so that automatic refresh() — recomputing the M1 290% pin etc. —
+    // froze the main thread right after the hero appeared (video stall + scroll hitch). Drop the
+    // load/DOMContentLoaded auto-refresh; keep only resize/visibilitychange. The single
+    // authoritative refresh happens MASKED inside the loader's reveal() once layout has settled.
+    ScrollTrigger.config({ autoRefreshEvents: "resize,visibilitychange" });
+    if (!window.__M1_WANT_LOADER) {
+      // No intro loader is running (e.g. it was skipped): do the post-load refresh ourselves.
+      window.addEventListener('load', () => ScrollTrigger.refresh());
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ScrollTrigger.refresh());
     }
   } else {
     // Reduced motion or no GSAP: static gallery fallback + fully-filled headings.
@@ -1833,24 +2131,87 @@ form.wl .pill{justify-content:center;margin-top:4px}
 </script>
 
 <script>
+  /* ---- Hero slide-over depth + perf: drive --coverP (0 in view → 1 fully covered) for the
+          subtle scale/drift/fade, and PAUSE the looping hero video once it's behind the content. ---- */
+  (function () {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+    const vid = hero.querySelector('video');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let covered = null, ticking = false;
+    const apply = () => {
+      ticking = false;
+      const h = hero.offsetHeight || window.innerHeight;
+      const p = Math.min(1, Math.max(0, window.scrollY / h));   // 0 = hero in view, 1 = fully covered
+      if (!reduce) hero.style.setProperty('--coverP', p.toFixed(4));
+      const isCovered = p >= 0.999;                             // video off-screen → stop decoding (CPU/battery)
+      if (vid && isCovered !== covered) {
+        covered = isCovered;
+        if (isCovered) vid.pause();
+        else { const r = vid.play(); if (r && r.catch) r.catch(() => {}); }
+      }
+    };
+    const onScrollHero = () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } };
+    apply();
+    window.addEventListener('scroll', onScrollHero, { passive: true });
+    window.addEventListener('resize', onScrollHero, { passive: true });
+  })();
+
+  /* ---- Hero video FREEZE-RECOVERY ("restart"): the browser can drop the video decoder after the
+          looping bg video is paused / off-screen, leaving a frozen frame on resume. While the hero is
+          in view, watch currentTime; if it stops advancing, re-kick play() and — if still stuck —
+          v.load() to fully re-initialise the element (the runtime equivalent of remove-and-re-add). ---- */
+  (function () {
+    const hero = document.querySelector('.hero');
+    const v = hero && hero.querySelector('video');
+    if (!v || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let lastT = -1, stalls = 0;
+    const kick = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+    const visible = () => (window.scrollY || 0) < (hero.offsetHeight || window.innerHeight) * 0.98;
+    setInterval(() => {
+      if (!visible()) { lastT = v.currentTime; stalls = 0; return; }   // covered → leave the pause-on-cover logic alone
+      if (v.paused) { kick(); lastT = v.currentTime; stalls = 0; return; }   // visible but paused → re-play
+      if (v.currentTime === lastT) {                                  // should be playing, but the frame is frozen
+        stalls++;
+        if (stalls >= 2) { try { v.load(); } catch (e) {} kick(); stalls = 0;
+          console.log('%c[hero-video] restart (was frozen)', 'color:#fff;background:#c60;padding:1px 4px'); }
+        else kick();
+      } else { stalls = 0; }
+      lastT = v.currentTime;
+    }, 450);
+  })();
+
   /* ---- Nav: background on scroll + auto-hide (hide on scroll-down past the hero, reveal on scroll-up) ---- */
   const nav = document.getElementById('nav');
   const heroEl = document.querySelector('.hero');
   let lastNavY = window.scrollY;
+  let navWasPast = window.scrollY > (heroEl ? heroEl.offsetHeight : window.innerHeight) - 8;
+  // When the bar finishes sliding OUT past the hero, switch it to the filled look in the
+  // BACKGROUND (off-screen, never seen) → the next scroll-up reveals it already white, and
+  // the slide-OUT stays transparent (its hero look) = no flash.
+  nav.addEventListener('transitionend', (e) => {
+    if (e.propertyName === 'transform' && nav.classList.contains('nav-hidden')) nav.classList.add('scrolled');
+  });
   const onScroll = () => {
     const y = window.scrollY;
     const heroH = heroEl ? heroEl.offsetHeight : window.innerHeight;
     const pastHero = y > heroH - 8;
-    // White fill ONLY once the hero is fully off screen (covered by the content sliding over it).
-    nav.classList.toggle('scrolled', pastHero);
-    // Only auto-hide once we're PAST the hero; always shown inside the hero or when the menu is open.
     if (!pastHero || document.body.classList.contains('menu-open')) {
+      nav.classList.remove('nav-hidden');                 // inside the hero / menu open → shown…
+      nav.classList.remove('scrolled');                   // …and transparent (hero look)
+    } else if (!navWasPast) {
+      // The MOMENT we cross off the hero: slide the (still-transparent) bar up off-screen.
+      // Fires on the crossing itself — so even if the next section locks scroll right here,
+      // the bar still slides away (the CSS transition runs regardless of scroll position).
+      nav.classList.remove('scrolled');
+      nav.classList.add('nav-hidden');
+    } else if (y < lastNavY - 5) {
+      nav.classList.add('scrolled');                      // scroll UP → reveal filled
       nav.classList.remove('nav-hidden');
     } else if (y > lastNavY + 5) {
-      nav.classList.add('nav-hidden');      // scrolling DOWN → collapse up off-screen
-    } else if (y < lastNavY - 5) {
-      nav.classList.remove('nav-hidden');   // scrolling UP → reveal
+      nav.classList.add('nav-hidden');                    // scroll DOWN → hide
     }
+    navWasPast = pastHero;
     lastNavY = y;
   };
   onScroll();
@@ -2082,15 +2443,55 @@ form.wl .pill{justify-content:center;margin-top:4px}
       o[i*4]=o[i*4+1]=o[i*4+2]=g;o[i*4+3]=255;}
     oc.putImageData(od,0,0);return out;
   }
-  function applyField(mat){
+  function applyField(mat,mirror){
     const hc=faceHeight();
     const nrm=texOf(heightToNormal(hc,2.6)),dsp=texOf(dispFromHeight(hc));
     const rgh=texOf(heightToRough(hc,0.06,0.22));
-    mat.normalMap=nrm;mat.normalScale=new THREE.Vector2(1.4,1.4);
+    // back face: its UVs are rotated 180° on the geometry (see backDisc) so M1 reads upright from behind; negate BOTH normal axes so lighting stays correct under the 180° turn.
+    mat.normalMap=nrm;mat.normalScale=new THREE.Vector2(mirror?-1.4:1.4,mirror?-1.4:1.4);
     mat.displacementMap=dsp;mat.displacementScale=RECESS;mat.displacementBias=0;
     mat.roughnessMap=rgh;mat.needsUpdate=true;
   }
-  applyField(frontMat);applyField(backMat);
+  applyField(frontMat);applyField(backMat,true);
+
+  /* ---------- INTRO-LOADER water fill: a shared shader patch on every coin material. uActive gates it
+     OFF in normal use; while the loader runs it keeps the coin full BLUE below a wavy rising water line
+     and desaturates it to mono ABOVE — so the mono→blue fill happens WITHIN the coin itself. ---------- */
+  const FILL = { uActive:{value:0}, uFill:{value:1e6}, uTime:{value:0}, uAmp:{value:0}, uFreq:{value:0} };
+  function addFill(mat){
+    mat.onBeforeCompile = (shader)=>{
+      shader.uniforms.uActive=FILL.uActive; shader.uniforms.uFill=FILL.uFill;
+      shader.uniforms.uTime=FILL.uTime; shader.uniforms.uAmp=FILL.uAmp; shader.uniforms.uFreq=FILL.uFreq;
+      shader.vertexShader = 'varying vec3 vFillW;\n' + shader.vertexShader.replace(
+        '#include <fog_vertex>',
+        '#include <fog_vertex>\n  vFillW = (modelMatrix * vec4(transformed,1.0)).xyz;'
+      );
+      shader.fragmentShader =
+        'uniform float uActive; uniform float uFill; uniform float uTime; uniform float uAmp; uniform float uFreq; varying vec3 vFillW;\n'
+        + shader.fragmentShader.replace(
+          '#include <dithering_fragment>',
+          '#include <dithering_fragment>\n'
+          + '  if(uActive > 0.5){\n'
+          + '    float w = sin(vFillW.x*uFreq - uTime)*0.55\n'                          // 3 layers, all flowing left→right
+          + '            + sin(vFillW.x*uFreq*1.9 - uTime*1.5 + 1.3)*0.30\n'
+          + '            + sin(vFillW.x*uFreq*3.4 - uTime*2.3)*0.15;\n'
+          + '    float line = uFill + uAmp*w;\n'
+          + '    float edge = uAmp*0.12;\n'
+          + '    float below = 1.0 - smoothstep(line-edge, line+edge, vFillW.y);\n'      // 1 below the water line, 0 above
+          + '    float lum = dot(gl_FragColor.rgb, vec3(0.299,0.587,0.114));\n'
+          + '    vec3 col = mix(vec3(lum*0.95), gl_FragColor.rgb, below);\n'             // filled = EXACT coin colour; unfilled = clean mono
+          + '    float surf = abs(vFillW.y - line);\n'
+          + '    float foam = smoothstep(uAmp*1.3, 0.0, surf);\n'                        // taller, thicker crest
+          + '    float bub = sin(vFillW.x*uFreq*7.0 - uTime*3.0)*sin(vFillW.x*uFreq*4.3 + uTime*2.1);\n'
+          + '    foam *= 0.6 + 0.5*smoothstep(0.1,0.6,bub);\n'                            // bubbly sparkle along the crest
+          + '    col = mix(col, vec3(0.80,0.91,1.0), foam*(1.0-below)*0.55);\n'           // whitish-blue foam just above the water
+          + '    gl_FragColor = vec4(col, gl_FragColor.a);\n'
+          + '  }\n'
+        );
+    };
+    mat.needsUpdate = true;
+  }
+  [shellMat, edgeMat, frontMat, backMat].forEach(addFill);
 
   /* ---------- geometry: lathe shell ---------- */
   const P=[],Vp=(r,y)=>P.push(new THREE.Vector2(r,y));
@@ -2138,6 +2539,9 @@ form.wl .pill{justify-content:center;margin-top:4px}
   frontDisc.geometry.rotateX(-Math.PI/2);frontDisc.position.y=fieldY;
   const backDisc=new THREE.Mesh(radialDisc(fieldR,260,360),backMat);
   backDisc.geometry.rotateX(Math.PI/2);backDisc.position.y=-fieldY;
+  // rotate the back face's UVs 180° (flip BOTH u and v) so the raised M1 reads UPRIGHT from behind.
+  // The two discs are mounted with opposite X-rotations, so the back otherwise reads upside-down AND mirrored (a 180° turn), not a plain mirror.
+  { const uv=backDisc.geometry.attributes.uv; for(let i=0;i<uv.count;i++){ uv.setX(i,1-uv.getX(i)); uv.setY(i,1-uv.getY(i)); } uv.needsUpdate=true; }
 
   // Nested frames so the beauty-tilt is a STABLE pose and the Y-spin happens INSIDE it:
   // pivot (position+scale) -> tiltGroup (3/4 beauty tilt) -> spinGroup (scroll Y-spin) -> coinGroup (faces camera).
@@ -2305,14 +2709,14 @@ form.wl .pill{justify-content:center;margin-top:4px}
   /* ---------- TOKEN-CENTRE mode: coin sits centred in #monaco1, slow idle Y-spin,
      glued to #m1CoinAnchor as the page scrolls. Decoupled from the hero, so we never
      add `coin-live` (the hero keeps its plain CSS "O"). ---------- */
-  const TOKEN_SPIN_SPEED = 0.34;   // rad/sec — slow self-rotation on the Y axis (dial)
-  const TOKEN_TILT_X     = -0.30;  // gentle 3/4 tilt so the spin reads as a 3D coin (dial)
+  const TOKEN_SPIN_SPEED = 0.34;   // rad/sec — turntable spin around the coin's vertical (Y) axis (dial)
+  const TOKEN_TILT_Z     = -0.30;  // ROLL: top leans right / bottom leans left; the spin axis tilts with it. Crank toward -0.785 for ~45° (dial)
   let tokenSpin = 0, tLast = performance.now(), tLastY = -99999;
   function placeToken(){
     measure();
     pivot.position.copy(anchorWorld);
     pivot.scale.setScalar(startScale);
-    tiltGroup.rotation.set(TOKEN_TILT_X, 0, 0);
+    tiltGroup.rotation.set(0, 0, TOKEN_TILT_Z);
   }
   function tokenOffscreen(){
     const r = anchor.getBoundingClientRect();
@@ -2335,6 +2739,42 @@ form.wl .pill{justify-content:center;margin-top:4px}
     if (y !== tLastY){ tLastY = y; placeToken(); spinGroup.rotation.y = 0; renderer.render(scene, camera); }
   }
 
+  /* ---------- INTRO-LOADER mode: render the coin centred + OBLIQUELY tilted (real 3D, like ref img 2)
+     while the page loads, and drive the in-shader water fill (FILL.*) from real progress. On reveal,
+     stopLoader() turns the fill OFF and the normal token-section docking takes over. ---------- */
+  const LOADER_SCALE  = 1.18;   // coin size in the loader, × endScale (dial)
+  const LOADER_TILT_X = -0.42;  // lean back → shows the top face / depth (dial)
+  const LOADER_TILT_Y = -0.30;  // turn → reveals the knurled right edge (dial)
+  const LOADER_TILT_Z = -0.26;  // roll → bottom-left / top-right lean (dial)
+  let LOADER_ON = false, loaderRAF = 0, loaderFill = 0;
+  function frameLoader(){
+    if (!LOADER_ON) return;
+    loaderRAF = requestAnimationFrame(frameLoader);
+    measure();                                    // keep centreWorld/endScale fresh (handles resize)
+    const scl = endScale * LOADER_SCALE;
+    pivot.position.copy(centreWorld);
+    pivot.scale.setScalar(scl);
+    tiltGroup.rotation.set(LOADER_TILT_X, LOADER_TILT_Y, LOADER_TILT_Z);
+    spinGroup.rotation.y = 0;
+    // water line rises bottom→top with progress; wave amplitude/freq/speed scale with the coin
+    const half = R * scl * 1.04;
+    FILL.uActive.value = 1;
+    FILL.uFill.value   = centreWorld.y - half + (2 * half) * loaderFill;
+    FILL.uAmp.value    = R * scl * 0.11;   // taller, more watery wave (dial)
+    FILL.uFreq.value   = 2.8 / (R * scl);  // ~3 humps across the coin (dial)
+    FILL.uTime.value   = performance.now() * 0.0023;
+    renderer.render(scene, camera);
+  }
+  function startLoader(){ LOADER_ON = true; measure(); loaderRAF = requestAnimationFrame(frameLoader); }
+  function setFill(p){ loaderFill = p < 0 ? 0 : (p > 1 ? 1 : p); }
+  function stopLoader(){
+    LOADER_ON = false; cancelAnimationFrame(loaderRAF); FILL.uActive.value = 0;
+    try{ renderer.clear(); }catch(e){}                               // wipe the centred coin frame so it doesn't linger in the hero
+    measure(); tLast = performance.now();
+    requestAnimationFrame(REDUCE ? frameTokenStatic : frameToken);   // hand the coin back to the token section
+  }
+  window.M1Coin = { startLoader: startLoader, stopLoader: stopLoader, setFill: setFill };
+
   /* ---------- boot ---------- */
   function boot(){
     if (!COIN_ON || !anchor){                               // off / no token anchor → hide; hero keeps its "O"
@@ -2344,6 +2784,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
     }
     document.documentElement.classList.add('coin-token-live'); // hide the section's CSS fallback medallion
     if (new URLSearchParams(location.search).has('pose')){ renderPose(); return; }
+    if (window.__M1_WANT_LOADER){ startLoader(); return; }  // intro loader owns the coin until the reveal
     measure();
     tLast = performance.now();
     requestAnimationFrame(REDUCE ? frameTokenStatic : frameToken);
