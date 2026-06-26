@@ -846,7 +846,7 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders â†
 
 /* ---------- MEDIA BLEED (Maravilla-style full-bleed image band) ---------- */
 .media-bleed{
-  position:relative; padding:0; overflow:hidden; isolation:isolate;
+  position:relative; z-index:3; padding:0; overflow:hidden; isolation:isolate;   /* z:3 = same cover layer as #ai â†’ Group 3 stays ABOVE the still-pinned M1 photo (z:2), no gap */
   min-height:clamp(560px,88vh,860px);
   display:flex; flex-direction:column; justify-content:flex-end;
   --mb-left-x:16%;    /* DIAL: "Full" centred in the gap between section-left and the building */
@@ -907,6 +907,15 @@ html.coin-token-live .ts-coin-fallback{ display:none; }  /* real coin renders â†
   position:relative;
 }
 .gallery-head{ padding-top:clamp(72px,9vw,120px); padding-bottom:clamp(26px,4vw,52px); }
+/* gallery header â€” centred, Caslon, normal + italic mix (like the media "A Full Picture"); replaced the boring left-aligned line */
+#gallery .gallery-head{ text-align:center; }
+#gallery .gallery-head .head-block{ margin-inline:auto; }
+#gallery .g-heading{
+  font-family:var(--serif); font-weight:400; text-transform:none; color:var(--ink);
+  font-size:clamp(2.4rem,6vw,5rem); line-height:1.04; letter-spacing:-.015em;
+  margin:0 auto; max-width:18ch; text-wrap:balance;
+}
+#gallery .g-heading em{ font-style:italic; display:block; }   /* "every detail" drops to its own line (faux-slant â€” Caslon Display has no true italic, same as .mb-right em) */
 /* Each card is position:sticky and centred. As you scroll, the current card sticks while the NEXT
    scrolls up from below and COVERS it (later DOM paints on top). Pure native scroll -> seamless
    (no pin, no snap), one card at a time (no peek). --g-h = card height, --g-top = (100svh - --g-h)/2
@@ -1519,7 +1528,7 @@ form.wl .pill{justify-content:center;margin-top:4px}
   <!-- Heading sits above the pinned deck (Maravilla "Care in every detail"). -->
   <div class="wrap gallery-head">
     <div class="head-block reveal wide">
-            <h2 id="gallery-h" class="fill-head">A closer look at MONACO1.</h2>
+            <h2 id="gallery-h" class="g-heading" aria-label="Care in every detail">Care in <em>every detail</em></h2>
     </div>
   </div>
 
